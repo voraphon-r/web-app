@@ -1,0 +1,11 @@
+# Private: never commit
+.mcp.json
+routine/
+.claude/settings.local.json
+Note.txt
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-do List</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+      margin: 0;
+      padding: 32px 16px;
+    }
+    .card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    [hidden] { display: none !important; }
+    h1 { margin: 0 0 16px; font-size: 24px; }
+    form { display: flex; gap: 8px; }
+    #login-form { flex-direction: column; }
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .add { background: #16a34a; color: #fff; }
+    .delete { background: transparent; color: #dc2626; padding: 4px 8px; }
+    .logout { background: #e5e7eb; color: #374151; padding: 6px 12px; font-size: 14px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .badge {
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+    ul { list-style: none; padding: 0; margin: 16px 0 0; }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    li span { flex: 1; word-break: break-word; }
+    li.done span { text-decoration: line-through; color: #9ca3af; }
+    .attach {
+      background: #e5e7eb;
+      color: #374151;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+    .attach.has-file { background: #dbeafe; color: #1d4ed8; }
+    #image-input { display: none; }
+    .thumb {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex: none;
+      cursor: zoom-in;
+      background: #f3f4f6;
+    }
+    .owner { flex: none; font-size: 12px; color: #6b7280; background: #f3f4f6; border-radius: 6px; padding: 2px 6px; }
+    #status { margin-top: 12px; font-size: 14px; color: #6b7280; }
+    #status.error { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>รายการสิ่งที่ต้องทำ</h1>
+
+    <!-- หน้าล็อกอิน -->
+    <section id="login-view" hidden>
+      <form id="login-form">
+        <input type="text" id="username-input" placeholder="ชื่อผู้ใช้" autocomplete="username" required>
+        <input type="password" id="password-input" placeholder="รหัสผ่าน" autocomplete="current-password" required>
+        <button type="submit" class="add">เข้าสู่ระบบ</button>
+      </form>
+    </section>
+
+    <!-- หน้ารายการงาน (หลังล็อกอิน) -->
+    <section id="app-view" hidden>
+      <div class="topbar">
+        <div>สวัสดี <strong id="who"></strong><span id="admin-badge" class="badge" hidden>admin</span></div>
+        <button id="logout-btn" class="logout">ออกจากระบบ</button>
+      </div>
+
+      <form id="add-form">
+        <input type="text" id="task-input" placeholder="พิมพ์สิ่งที่ต้องทำ..." required>
+        <label class="attach" id="attach-label" title="แนบรูป">
+          📷
+          <input type="file" id="image-input" accept="image/*">
+        </label>
+        <button type="submit" class="add">เพิ่ม</button>
+      </form>
+
+      <ul id="todo-list"></ul>
+    </section>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- ไลบรารีของ Supabase สำหรับคุยกับฐานข้อมูลจากหน้าเว็บ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ===== 1. เชื่อมต่อกับโปรเจกต์ Supabase =====
+    // URL และ publishable key เป็นค่าที่เปิดเผยได้ ใส่ในหน้าเว็บได้
+    // สิ่งที่ป้องกันข้อมูลจริง ๆ คือ Row Level Security (RLS) ที่ตั้งไว้ในตาราง
+    const SUPABASE_URL = 'https://rfmkmerdiusocpflyhoq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_lLShG3jlzSlmxnwy4WSGLg_tOs_gWS-';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Supabase ล็อกอินด้วยอีเมล เลยแปลงชื่อผู้ใช้เป็นอีเมลเบื้องหลัง
+    // ตอนสร้างบัญชีใน Supabase ให้ใช้อีเมลแบบ ชื่อผู้ใช้@todo-app.example
+    const EMAIL_DOMAIN = '@todo-app.example';
+
+    const loginView = document.getElementById('login-view');
+    const appView = document.getElementById('app-view');
+    const loginForm = document.getElementById('login-form');
+    const usernameInput = document.getElementById('username-input');
+    const passwordInput = document.getElementById('password-input');
+    const whoEl = document.getElementById('who');
+    const adminBadge = document.getElementById('admin-badge');
+    const logoutBtn = document.getElementById('logout-btn');
+    const listEl = document.getElementById('todo-list');
+    const formEl = document.getElementById('add-form');
+    const inputEl = document.getElementById('task-input');
+    const statusEl = document.getElementById('status');
+    const imageInput = document.getElementById('image-input');
+    const attachLabel = document.getElementById('attach-label');
+
+    const BUCKET = 'todo-images';
+    const MAX_IMAGE_SIDE = 1280;   // ย่อให้ด้านยาวสุดไม่เกินเท่านี้ (พิกเซล)
+    const IMAGE_QUALITY = 0.8;     // คุณภาพหลังบีบอัด 0–1
+
+    let isAdmin = false;
+    let currentUserId = null;
+
+    function showStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'error' : '';
+    }
+
+    // ===== 2. ล็อกอิน / ออกจากระบบ =====
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showStatus('กำลังเข้าสู่ระบบ...');
+      const username = usernameInput.value.trim().toLowerCase();
+      const { error } = await db.auth.signInWithPassword({
+        email: username + EMAIL_DOMAIN,
+        password: passwordInput.value,
+      });
+      if (error) {
+        showStatus('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', true);
+        return;
+      }
+      passwordInput.value = '';
+    });
+
+    logoutBtn.addEventListener('click', () => db.auth.signOut());
+
+    // สลับหน้าจอทุกครั้งที่สถานะล็อกอินเปลี่ยน (รวมถึงตอนเปิดหน้าเว็บ)
+    db.auth.onAuthStateChange((event, session) => {
+      // ห้ามเรียก Supabase ต่อตรงนี้โดยตรง ให้รอให้ callback จบก่อน
+      setTimeout(() => showView(session), 0);
+    });
+
+    async function showView(session) {
+      if (!session) {
+        appView.hidden = true;
+        loginView.hidden = false;
+        listEl.innerHTML = '';
+        showStatus('');
+        return;
+      }
+
+      // อ่านชื่อผู้ใช้และบทบาทของตัวเองจากตาราง profiles
+      const { data: profile, error } = await db
+        .from('profiles')
+        .select('username, role')
+        .eq('id', session.user.id)
+        .single();
+      if (error) {
+        showStatus('โหลดข้อมูลผู้ใช้ไม่สำเร็จ: ' + error.message, true);
+        return;
+      }
+
+      currentUserId = session.user.id;
+      isAdmin = profile.role === 'admin';
+      whoEl.textContent = profile.username;
+      adminBadge.hidden = !isAdmin;
+      loginView.hidden = true;
+      appView.hidden = false;
+      loadTodos();
+    }
+
+    // ===== 3. อ่านข้อมูล (SELECT) =====
+    // RLS กรองให้เอง: user ได้เฉพาะงานตัวเอง, admin ได้งานทุกคน
+    async function loadTodos() {
+      const { data, error } = await db
+        .from('todos')
+        .select('*, profiles(username)')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        showStatus('โหลดข้อมูลไม่สำเร็จ: ' + error.message, true);
+        return;
+      }
+      const imageUrls = await getImageUrls(data);
+      renderTodos(data, imageUrls);
+      showStatus('ทั้งหมด ' + data.length + ' รายการ');
+    }
+
+    // bucket เป็นแบบ private เลยต้องขอลิงก์ชั่วคราว (1 ชั่วโมง) มาแสดงรูป
+    async function getImageUrls(todos) {
+      const paths = todos.map((t) => t.image_path).filter(Boolean);
+      if (paths.length === 0) return {};
+      const { data, error } = await db.storage.from(BUCKET).createSignedUrls(paths, 3600);
+      if (error) {
+        showStatus('โหลดรูปไม่สำเร็จ: ' + error.message, true);
+        return {};
+      }
+      const urls = {};
+      for (const item of data) {
+        if (item.signedUrl) urls[item.path] = item.signedUrl;
+      }
+      return urls;
+    }
+
+    // วาดรายการลงหน้าเว็บ
+    function renderTodos(todos, imageUrls) {
+      listEl.innerHTML = '';
+      for (const todo of todos) {
+        const li = document.createElement('li');
+        if (todo.is_done) li.className = 'done';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = todo.is_done;
+        checkbox.addEventListener('change', () => toggleTodo(todo.id, checkbox.checked));
+
+        const text = document.createElement('span');
+        text.textContent = todo.task;
+
+        const del = document.createElement('button');
+        del.className = 'delete';
+        del.textContent = 'ลบ';
+        del.addEventListener('click', () => deleteTodo(todo));
+
+        li.append(checkbox);
+
+        // รูปย่อ กดแล้วเปิดรูปเต็มในแท็บใหม่
+        const url = imageUrls[todo.image_path];
+        if (url) {
+          const img = document.createElement('img');
+          img.className = 'thumb';
+          img.src = url;
+          img.alt = 'รูปแนบ';
+          img.addEventListener('click', () => window.open(url, '_blank'));
+          li.append(img);
+        }
+
+        li.append(text);
+
+        // admin เห็นว่างานนี้เป็นของใคร
+        if (isAdmin && todo.profiles) {
+          const owner = document.createElement('small');
+          owner.className = 'owner';
+          owner.textContent = todo.profiles.username;
+          li.append(owner);
+        }
+
+        li.append(del);
+        listEl.append(li);
+      }
+    }
+
+    // ===== 4. บีบอัดรูปในเบราว์เซอร์ก่อนอัปโหลด =====
+    // ย่อขนาดแล้วแปลงเป็น WebP (ถ้าเบราว์เซอร์ทำไม่ได้จะใช้ JPEG แทน)
+    async function compressImage(file) {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, IMAGE_QUALITY));
+      let blob = await toBlob('image/webp');
+      if (!blob || blob.type !== 'image/webp') blob = await toBlob('image/jpeg');
+      return blob;
+    }
+
+    function formatSize(bytes) {
+      return bytes >= 1024 * 1024
+        ? (bytes / 1024 / 1024).toFixed(1) + ' MB'
+        : Math.round(bytes / 1024) + ' KB';
+    }
+
+    // แสดงว่าเลือกรูปไว้แล้ว
+    imageInput.addEventListener('change', () => {
+      attachLabel.classList.toggle('has-file', imageInput.files.length > 0);
+      attachLabel.title = imageInput.files.length > 0 ? imageInput.files[0].name : 'แนบรูป';
+    });
+
+    // ===== 5. เพิ่มข้อมูล (INSERT) =====
+    // ไม่ต้องส่ง user_id ฐานข้อมูลใส่ให้เองจากคนที่ล็อกอินอยู่
+    formEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const task = inputEl.value.trim();
+      if (!task) return;
+
+      let imagePath = null;
+      const file = imageInput.files[0];
+      if (file) {
+        showStatus('กำลังบีบอัดรูป...');
+        let blob;
+        try {
+          blob = await compressImage(file);
+        } catch (err) {
+          showStatus('เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น (JPG หรือ PNG)', true);
+          return;
+        }
+
+        showStatus('กำลังอัปโหลดรูป (' + formatSize(file.size) + ' → ' + formatSize(blob.size) + ')...');
+        const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+        imagePath = currentUserId + '/' + crypto.randomUUID() + '.' + ext;
+        const { error: uploadError } = await db.storage
+          .from(BUCKET)
+          .upload(imagePath, blob, { contentType: blob.type });
+        if (uploadError) {
+          showStatus('อัปโหลดรูปไม่สำเร็จ: ' + uploadError.message, true);
+          return;
+        }
+      }
+
+      const { error } = await db.from('todos').insert({ task: task, image_path: imagePath });
+      if (error) {
+        // บันทึกงานไม่ได้ ก็ลบรูปที่เพิ่งอัปโหลดทิ้ง จะได้ไม่มีไฟล์ค้าง
+        if (imagePath) await db.storage.from(BUCKET).remove([imagePath]);
+        showStatus('เพิ่มไม่สำเร็จ: ' + error.message, true);
+        return;
+      }
+      inputEl.value = '';
+      imageInput.value = '';
+      imageInput.dispatchEvent(new Event('change'));
+      loadTodos();
+    });
+
+    // ===== 6. แก้ไขข้อมูล (UPDATE) =====
+    async function toggleTodo(id, isDone) {
+      const { error } = await db.from('todos').update({ is_done: isDone }).eq('id', id);
+      if (error) showStatus('แก้ไขไม่สำเร็จ: ' + error.message, true);
+      loadTodos();
+    }
+
+    // ===== 7. ลบข้อมูล (DELETE) =====
+    // ลบงานก่อน ถ้าสำเร็จค่อยลบรูปใน Storage ตาม
+    async function deleteTodo(todo) {
+      const { error } = await db.from('todos').delete().eq('id', todo.id);
+      if (error) {
+        showStatus('ลบไม่สำเร็จ: ' + error.message, true);
+      } else if (todo.image_path) {
+        await db.storage.from(BUCKET).remove([todo.image_path]);
+      }
+      loadTodos();
+    }
+  </script>
+</body>
+</html>
