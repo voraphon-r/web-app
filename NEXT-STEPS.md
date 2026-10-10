@@ -1,8 +1,49 @@
-# งานที่จะทำต่อ (todo-app)
+# งานที่จะทำต่อ (Web_App)
 
-บันทึกไว้เมื่อ 2026-10-08
+บันทึกไว้เมื่อ 2026-10-08 · อัปเดตล่าสุด 2026-10-10
 
-## สถานะตอนนี้
+## สิ่งที่ทำแล้ว (สรุปเมื่อ 2026-10-10)
+
+สรุปงาน 2 วันล่าสุด ส่วนแผนเดิมของ todo-app อยู่ด้านล่าง ยังทำต่อตามเดิม
+
+### GitHub และโฟลเดอร์งาน
+- สมัคร/เชื่อม GitHub กับ Claude แล้ว เปลี่ยนชื่อบัญชีจาก `RujeeP` เป็น **`voraphon-r`** (ลิงก์ชื่อเก่ายัง redirect ให้ จนกว่าจะมีคนอื่นมาจดชื่อ RujeeP)
+- ย้ายโฟลเดอร์ `C:\dev\todo-app` → **`C:\dev\Web_App`** ทำเป็น git และเอาขึ้น repo **voraphon-r/web-app** (Public)
+  - `.gitignore` กันไฟล์ส่วนตัวไว้แล้ว: `.mcp.json`, `routine/`, `.claude/settings.local.json`, `Note.txt`
+- ตั้ง repo ในหน้าตั้งค่าโปรเจกต์ Claude เป็น voraphon-r/web-app และเพิ่ม voraphon-r/voraphon.com
+- เขียน `claude-structure.md` อธิบายโครงสร้างแอป Claude (Chat / Cowork / Code)
+
+### เว็บส่วนตัว (personal website) www.voraphon.com
+- ทำจาก Resume ใช้สีธีมเดียวกับ Resume เลือกโครงแบบ **B (หน้าเดียว)** มีส่วนหัวพร้อมรูปและปุ่มติดต่อ, เกี่ยวกับ, ประสบการณ์, ผลงาน, ทักษะ, การศึกษา, ติดต่อ
+- ตัดข้อมูลส่วนตัวออก (เบอร์โทร ที่อยู่ วันเกิด เกรด ข้อมูลบุคคลอ้างอิง)
+- หัวข้อ **ผลงาน** มีการ์ด To-do App ลิงก์ไป todo.voraphon.com
+- เพิ่ม LinkedIn, ปุ่มดาวน์โหลด Resume PDF ฉบับสาธารณะ (ไทย/อังกฤษ), หน้าอังกฤษ `/en` พร้อมปุ่มสลับ TH/EN, favicon ตัว V สีเขียว
+- ที่เก็บโค้ด: repo **voraphon-r/voraphon.com** (Private) โฟลเดอร์บนเครื่อง **`C:\dev\voraphon.com`** เป็น git clone ของ repo นี้แล้ว (ของเดิมสำรองไว้ที่ `C:\dev\voraphon.com.bak`)
+- ฝากเว็บ (hosting): Netlify โปรเจกต์ `voraphon` ผูกกับ GitHub แล้ว **push ขึ้น main เมื่อไหร่ เว็บอัปเดตเอง** (voraphon.netlify.app, Public)
+- โดเมน/DNS ที่ Cloudflare: `A voraphon.com → 75.2.60.5` และ `CNAME www → voraphon.netlify.app` (DNS only / เมฆสีเทา) ส่วน record `todo` ไม่ได้แตะ
+- ไฟล์ต้นฉบับที่ใช้สร้างหน้าเว็บและ Resume PDF อยู่ในไฟล์โปรเจกต์ Claude (`voraphon.com/source/build.py`, `resume.py`)
+
+### เครื่องมือบนเครื่อง
+- VS Code ล็อกอิน GitHub ด้วยบัญชี voraphon-r แล้ว และติดตั้ง extension **Claude Code** (ของ Anthropic) เป็น side panel
+- ลำดับการแก้งานบนเครื่อง: `git pull` → แก้ไฟล์ → `git add .` → `git commit -m "..."` → `git push`
+
+### การตัดสินใจ
+- โปรเจกต์ใหม่ที่ต้องใช้ฐานข้อมูล ให้ใช้ Supabase โปรเจกต์ที่ 2 ร่วมกัน ตั้งชื่อกลางๆ เช่น **`voraphon-apps`** แล้วแยกแต่ละแอปเป็น schema ของตัวเอง (แพ็กเกจฟรีเปิดได้ 2 โปรเจกต์) ส่วน todo-app ใช้โปรเจกต์ของตัวเองต่อ
+- GitHub เก็บโค้ดและไฟล์เล็กที่เว็บใช้ ส่วนไฟล์ใหญ่และไฟล์ส่วนตัว (เช่น Resume ฉบับเต็ม) เก็บใน Google Drive
+- โฟลเดอร์ Google Drive `800 Google Site\Web App` เป็นงานเก่าสมัยหัดใช้ Claude ไม่ต้องย้ายมา
+
+## ขั้นต่อไป (อัปเดต 2026-10-10)
+1. **เปลี่ยนรหัส admin และ user01 ของ todo-app** ให้ยาว ไม่ซ้ำกัน ไม่มีเบอร์โทร (ด่วน เพราะ repo web-app เป็น Public แล้ว) จากนั้นลบ `C:\dev\Note.txt`
+2. **ย้าย `Resume_Voraphon_2026-rev2.pdf` ออกจาก `C:\dev\Web_App`** ไปไว้ Google Drive หรือ `C:\dev` ตรงๆ (มีเบอร์โทรและที่อยู่ ห้ามขึ้น GitHub)
+3. ทดสอบล็อกอินและอัปโหลดรูปใน todo.voraphon.com ของจริง (ข้อ 1–2 ในแผนเดิม)
+4. สร้างรหัสสำรอง (backup codes) ของบัญชี Google
+5. ตรวจคำแปลหน้าอังกฤษของเว็บส่วนตัว โดยเฉพาะชื่อตำแหน่งและใบอนุญาต กว. ("ภาคี" แปลเป็น Associate Engineer)
+6. รอ Netlify ออกใบรับรอง HTTPS ของ voraphon.com แล้วเปิดเช็กทั้ง voraphon.com และ www
+7. อัปเดตข้อมูลใน LinkedIn ให้ตรงกับเว็บ
+8. ลบโฟลเดอร์ที่ไม่ใช้แล้ว: `C:\dev\todo-app` (ว่าง) และ `C:\dev\voraphon.com.bak` (เมื่อแน่ใจว่าไม่ต้องใช้)
+9. (ทางเลือก) ผูก todo.voraphon.com กับ GitHub แบบเดียวกับเว็บส่วนตัว จะได้ไม่ต้องลากโฟลเดอร์ `public` ไปวางเองทุกครั้ง
+
+## สถานะตอนนี้ (ของ todo-app, บันทึก 2026-10-08)
 - **ออนไลน์แล้ว:** https://todo.voraphon.com (Netlify, 2026-10-08)
   - ชื่อเดิม https://spiffy-semolina-c84975.netlify.app ยังใช้ได้
   - โดเมน voraphon.com ซื้อที่ Cloudflare Registrar (ต่ออายุอัตโนมัติ หมดอายุ 8 ต.ค. 2027)
