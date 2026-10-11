@@ -96,7 +96,33 @@
     .total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 16px; padding-top: 12px; border-top: 2px solid #1f2937; }
     .hint { font-size: 13px; color: #6b7280; margin-top: 6px; }
     .empty { color: #9ca3af; text-align: center; padding: 24px 0; }
-    .clear-all { margin-top: 20px; background: #fee2e2; color: #b91c1c; font-size: 14px; }
+
+
+    .booking { background: #fff7ed; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+    .booking-row { display: flex; gap: 8px; }
+    .booking-row select { flex: 1; font-size: 15px; }
+    .secondary { background: #e5e7eb; color: #374151; font-size: 14px; }
+    .danger { background: #fee2e2; color: #b91c1c; font-size: 14px; }
+    .add { background: #16a34a; color: #fff; }
+    #booking-card { margin-top: 10px; font-size: 14px; color: #374151; }
+    #booking-card .tag { display: inline-block; background: #ea580c; color: #fff; border-radius: 999px; padding: 3px 12px; font-weight: 600; margin-bottom: 6px; }
+    #booking-card .tag.none { background: #e5e7eb; color: #6b7280; font-weight: 400; }
+    #booking-card .details { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    #booking-card .edit { background: transparent; color: #c2410c; padding: 0; font-size: 14px; text-decoration: underline; margin-top: 6px; }
+    .paid { color: #16a34a; }
+    .unpaid { color: #b45309; }
+    #booking-form { margin-top: 12px; border-top: 1px solid #fed7aa; padding-top: 12px; }
+    #booking-form h3 { margin: 0 0 8px; font-size: 16px; }
+    #booking-form label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #374151; margin-bottom: 10px; }
+    #booking-form label.check { flex-direction: row; align-items: center; margin: 0; white-space: nowrap; }
+    #booking-form input[type="date"], #booking-form input[type="time"], #booking-form input[type="number"] {
+      padding: 8px 10px; font-size: 16px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; min-width: 0;
+    }
+    #booking-form input[type="number"] { width: 110px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 12px; }
+    .time-pair { display: flex; align-items: center; gap: 6px; }
+    .time-pair input[type="time"] { flex: 1; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
     #status {
       position: fixed;
@@ -119,36 +145,75 @@
 <body>
   <div class="card">
     <h1>Kungten-Order · ร้านกุ้งเต้น</h1>
-    <p class="sub">ใส่ชื่อ เลือกเมนู แล้วกด "สั่ง" ทุกคนจะเห็นรายการรวมกันทันที <span id="live" class="live">● ออฟไลน์</span></p>
+    <p class="sub">เลือกงาน ใส่ชื่อ เลือกเมนู แล้วกด "สั่ง" ทุกคนจะเห็นรายการรวมกันทันที <span id="live" class="live">● ออฟไลน์</span></p>
 
-    <div class="name-row">
-      <label for="name-input">ชื่อของคุณ</label>
-      <input type="text" id="name-input" maxlength="40" placeholder="เช่น เก่ง" autocomplete="nickname">
-    </div>
-
-    <div class="tabs">
-      <button type="button" data-tab="menu" class="active">เมนู</button>
-      <button type="button" data-tab="orders">รายการสั่งรวม (<span id="order-count">0</span>)</button>
-    </div>
-
-    <!-- แท็บเมนู -->
-    <section id="menu-view">
-      <input type="search" id="search" placeholder="ค้นหาเมนู เช่น กุ้ง, ต้มยำ">
-      <div class="chips" id="chips"></div>
-      <div id="menu-list"><p class="empty">กำลังโหลดเมนู...</p></div>
-    </section>
-
-    <!-- แท็บรายการสั่งรวม -->
-    <section id="orders-view" hidden>
-      <div class="view-toggle">
-        <button type="button" data-view="dish" class="active">รวมตามเมนู (ไว้บอกร้าน)</button>
-        <button type="button" data-view="person">แยกตามคน</button>
+    <!-- ส่วนการจอง: เลือกงานที่จะสั่งอาหาร หรือจองใหม่ -->
+    <section class="booking">
+      <div class="booking-row">
+        <select id="booking-select" aria-label="เลือกงาน"></select>
+        <button type="button" class="secondary" id="new-booking-btn">+ จองใหม่</button>
       </div>
-      <div id="orders-list"></div>
-      <div class="total"><span>รวมทั้งหมด</span><span id="grand-total">0 บาท</span></div>
-      <p class="hint" id="total-hint" hidden></p>
-      <button type="button" class="clear-all" id="clear-all">ล้างรายการสั่งทั้งหมด (เริ่มรอบใหม่)</button>
+      <div id="booking-card"></div>
+
+      <form id="booking-form" hidden>
+        <h3 id="booking-form-title">จองใหม่</h3>
+        <label>หัวข้องาน
+          <input type="text" id="b-title" maxlength="80" list="title-options" placeholder="เช่น เลี้ยงส่งผู้บริหาร">
+        </label>
+        <div class="form-grid">
+          <label>วันที่ <input type="date" id="b-date" required></label>
+          <label>รอบ
+            <select id="b-session">
+              <option value="เย็น">รอบเย็น 18:00–24:00</option>
+              <option value="เช้า">รอบเช้า 11:00–17:00</option>
+            </select>
+          </label>
+          <label>เวลาจริง (ถ้ามี) <span class="time-pair"><input type="time" id="b-start"> – <input type="time" id="b-end"></span></label>
+          <label>ห้อง <input type="text" id="b-room" maxlength="60" list="room-options" placeholder="เช่น ห้องกุ้งซ่า 12"></label>
+          <label>จองในนาม <input type="text" id="b-by" maxlength="60" placeholder="เช่น คุณวรพล"></label>
+          <label>มัดจำ (บาท) <span class="time-pair"><input type="number" id="b-deposit" min="0" step="1" placeholder="ไม่ระบุ"> <label class="check"><input type="checkbox" id="b-paid"> จ่ายแล้ว</label></span></label>
+        </div>
+        <datalist id="room-options"></datalist>
+        <datalist id="title-options"></datalist>
+        <div class="form-actions">
+          <button type="submit" class="add" id="b-save">บันทึกการจอง</button>
+          <button type="button" class="secondary" id="b-cancel">ยกเลิก</button>
+          <button type="button" class="danger" id="b-delete" hidden>ลบการจองนี้</button>
+        </div>
+      </form>
     </section>
+
+    <!-- ส่วนสั่งอาหาร: แสดงเมื่อเลือกงานแล้ว -->
+    <section id="order-area" hidden>
+      <div class="name-row">
+        <label for="name-input">ชื่อของคุณ</label>
+        <input type="text" id="name-input" maxlength="40" placeholder="เช่น เก่ง" autocomplete="nickname">
+      </div>
+
+      <div class="tabs">
+        <button type="button" data-tab="menu" class="active">เมนู</button>
+        <button type="button" data-tab="orders">รายการสั่งรวม (<span id="order-count">0</span>)</button>
+      </div>
+
+      <!-- แท็บเมนู -->
+      <section id="menu-view">
+        <input type="search" id="search" placeholder="ค้นหาเมนู เช่น กุ้ง, ต้มยำ">
+        <div class="chips" id="chips"></div>
+        <div id="menu-list"><p class="empty">กำลังโหลดเมนู...</p></div>
+      </section>
+
+      <!-- แท็บรายการสั่งรวม -->
+      <section id="orders-view" hidden>
+        <div class="view-toggle">
+          <button type="button" data-view="dish" class="active">รวมตามเมนู (ไว้บอกร้าน)</button>
+          <button type="button" data-view="person">แยกตามคน</button>
+        </div>
+        <div id="orders-list"></div>
+        <div class="total"><span>รวมทั้งหมด</span><span id="grand-total">0 บาท</span></div>
+        <p class="hint" id="total-hint" hidden></p>
+      </section>
+    </section>
+    <p class="empty" id="no-booking" hidden>ยังไม่มีการจอง กด "+ จองใหม่" เพื่อเริ่ม</p>
   </div>
 
   <div id="status" hidden></div>
@@ -211,7 +276,172 @@
       return item.option_label ? `${item.name} (${item.option_label})` : item.name;
     }
 
-    // ===== 2. ชื่อผู้สั่ง: จำไว้ในเครื่อง ไม่ต้องพิมพ์ใหม่ทุกครั้ง =====
+
+    // ===== 2. การจอง (งานนัดกินข้าว) =====
+    const SESSIONS = { 'เช้า': 'รอบเช้า 11:00–17:00', 'เย็น': 'รอบเย็น 18:00–24:00' };
+    const bookingSelect = document.getElementById('booking-select');
+    const bookingCard = document.getElementById('booking-card');
+    const bookingForm = document.getElementById('booking-form');
+    const orderArea = document.getElementById('order-area');
+    const noBookingEl = document.getElementById('no-booking');
+    const f = (id) => document.getElementById(id);
+
+    let bookings = [];
+    let currentBookingId = null;
+    let editingId = null;          // null = กำลังจองใหม่, มีค่า = กำลังแก้การจองนั้น
+
+    const todayStr = () => new Date().toLocaleDateString('sv-SE');   // YYYY-MM-DD ตามเวลาเครื่อง
+    const hhmm = (t) => (t ? t.slice(0, 5) : '');
+    const thaiDate = (d) => new Date(d + 'T00:00:00')
+      .toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' });
+    const currentBooking = () => bookings.find((b) => b.id === currentBookingId) || null;
+
+    function rememberBooking(id) {
+      currentBookingId = id;
+      try { localStorage.setItem('kungten_booking', id || ''); } catch (e) {}
+    }
+
+    // ถ้ายังไม่เคยเลือก ให้เปิดงานที่ใกล้ที่สุดที่ยังไม่ผ่านไป
+    function pickDefaultBooking() {
+      let saved = null;
+      try { saved = localStorage.getItem('kungten_booking'); } catch (e) {}
+      if (bookings.some((b) => b.id === saved)) return saved;
+      const upcoming = bookings.find((b) => b.booking_date >= todayStr());
+      return (upcoming || bookings[bookings.length - 1] || {}).id || null;
+    }
+
+    async function loadBookings() {
+      const { data, error } = await db.from('bookings').select('*');
+      if (error) { showStatus('โหลดการจองไม่ได้: ' + error.message, true); return; }
+      bookings = data.sort((a, b) => a.booking_date.localeCompare(b.booking_date)
+        || (a.session === b.session ? 0 : a.session === 'เช้า' ? -1 : 1));
+      if (!currentBooking()) currentBookingId = pickDefaultBooking();
+      renderBookings();
+    }
+
+    function renderBookings() {
+      const today = todayStr();
+      bookingSelect.replaceChildren(...bookings.map((b) => el('option', {
+        value: b.id,
+        textContent: [thaiDate(b.booking_date), b.title || 'ไม่มีหัวข้อ', b.room].filter(Boolean).join(' · ')
+          + (b.booking_date < today ? ' (ผ่านไปแล้ว)' : ''),
+      })));
+      bookingSelect.value = currentBookingId || '';
+      bookingSelect.hidden = bookings.length === 0;
+      noBookingEl.hidden = bookings.length > 0 || !bookingForm.hidden;
+      orderArea.hidden = !currentBooking();
+
+      // ตัวเลือกห้อง/หัวข้อที่เคยใช้ จะขึ้นให้เลือกตอนพิมพ์
+      const unique = (key) => [...new Set(bookings.map((b) => b[key]).filter(Boolean))];
+      f('room-options').replaceChildren(...unique('room').map((v) => el('option', { value: v })));
+      f('title-options').replaceChildren(...unique('title').map((v) => el('option', { value: v })));
+
+      renderBookingCard();
+    }
+
+    function renderBookingCard() {
+      const b = currentBooking();
+      if (!b) { bookingCard.replaceChildren(); return; }
+      const time = b.start_time ? `${hhmm(b.start_time)}–${hhmm(b.end_time) || '?'} น.` : '';
+      const details = [
+        '📅 ' + thaiDate(b.booking_date),
+        '🕕 ' + SESSIONS[b.session] + (time ? ` (จองจริง ${time})` : ''),
+        b.room && '🚪 ' + b.room,
+        b.booked_by && '👤 จองในนาม ' + b.booked_by,
+      ].filter(Boolean).map((t) => el('span', { textContent: t }));
+      if (b.deposit_paid || b.deposit_amount != null) {
+        const amount = b.deposit_amount != null ? ' ' + baht(b.deposit_amount) : '';
+        details.push(el('span', {
+          className: b.deposit_paid ? 'paid' : 'unpaid',
+          textContent: b.deposit_paid ? '✅ จ่ายมัดจำแล้ว' + amount : '⏳ ยังไม่จ่ายมัดจำ' + amount,
+        }));
+      }
+      const edit = el('button', { type: 'button', className: 'edit', textContent: 'แก้ไขการจอง' });
+      edit.addEventListener('click', () => openBookingForm(b));
+      bookingCard.replaceChildren(
+        el('div', { className: 'tag' + (b.title ? '' : ' none'), textContent: b.title || 'ยังไม่ได้ตั้งหัวข้องาน' }),
+        el('div', { className: 'details' }, ...details),
+        edit);
+    }
+
+    function openBookingForm(b = null) {
+      editingId = b ? b.id : null;
+      f('booking-form-title').textContent = b ? 'แก้ไขการจอง' : 'จองใหม่';
+      f('b-title').value = b?.title || '';
+      f('b-date').value = b?.booking_date || todayStr();
+      f('b-session').value = b?.session || 'เย็น';
+      f('b-start').value = hhmm(b?.start_time);
+      f('b-end').value = hhmm(b?.end_time);
+      f('b-room').value = b?.room || '';
+      f('b-by').value = b?.booked_by || '';
+      f('b-deposit').value = b?.deposit_amount ?? '';
+      f('b-paid').checked = !!b?.deposit_paid;
+      f('b-delete').hidden = !b;
+      bookingForm.hidden = false;
+      noBookingEl.hidden = true;
+      f('b-title').focus();
+    }
+
+    function closeBookingForm() {
+      bookingForm.hidden = true;
+      noBookingEl.hidden = bookings.length > 0;
+    }
+
+    f('new-booking-btn').addEventListener('click', () => openBookingForm());
+    f('b-cancel').addEventListener('click', closeBookingForm);
+
+    bookingForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const text = (id) => f(id).value.trim() || null;
+      const deposit = f('b-deposit').value.trim();
+      const row = {
+        title: text('b-title'),
+        booking_date: f('b-date').value,
+        session: f('b-session').value,
+        start_time: f('b-start').value || null,
+        end_time: f('b-end').value || null,
+        room: text('b-room'),
+        booked_by: text('b-by'),
+        deposit_paid: f('b-paid').checked,
+        deposit_amount: deposit === '' ? null : Math.max(0, Math.round(Number(deposit))),
+      };
+      f('b-save').disabled = true;
+      let id = editingId;
+      let result;
+      if (id) {
+        result = await db.from('bookings').update(row).eq('id', id);
+      } else {
+        id = crypto.randomUUID();
+        result = await db.from('bookings').insert({ id, ...row });
+      }
+      f('b-save').disabled = false;
+      if (result.error) { showStatus('บันทึกการจองไม่สำเร็จ: ' + result.error.message, true); return; }
+      showStatus(editingId ? 'แก้ไขการจองแล้ว' : 'จองแล้ว เลือกเมนูได้เลย');
+      rememberBooking(id);
+      closeBookingForm();
+      await loadBookings();
+      await loadOrders();
+    });
+
+    f('b-delete').addEventListener('click', async () => {
+      if (!editingId) return;
+      if (!confirm('ลบการจองนี้ และรายการอาหารที่สั่งไว้ในงานนี้ทั้งหมด? (ย้อนกลับไม่ได้)')) return;
+      const { error } = await db.from('bookings').delete().eq('id', editingId);
+      if (error) { showStatus('ลบไม่สำเร็จ: ' + error.message, true); return; }
+      showStatus('ลบการจองแล้ว');
+      rememberBooking(null);
+      closeBookingForm();
+      await loadBookings();
+      await loadOrders();
+    });
+
+    bookingSelect.addEventListener('change', async () => {
+      rememberBooking(bookingSelect.value);
+      renderBookings();
+      await loadOrders();
+    });
+
+    // ===== 3. ชื่อผู้สั่ง: จำไว้ในเครื่อง ไม่ต้องพิมพ์ใหม่ทุกครั้ง =====
     try { nameInput.value = localStorage.getItem('kungten_order_name') || ''; } catch (e) {}
     nameInput.addEventListener('input', () => {
       nameInput.classList.remove('missing');
@@ -220,7 +450,7 @@
     });
     const myName = () => nameInput.value.trim();
 
-    // ===== 3. แท็บ =====
+    // ===== 4. แท็บ =====
     document.querySelectorAll('.tabs button').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b === btn));
@@ -236,7 +466,7 @@
       });
     });
 
-    // ===== 4. เมนู =====
+    // ===== 5. เมนู =====
     async function loadMenu() {
       const { data, error } = await db
         .from('menu_items')
@@ -328,7 +558,7 @@
 
     searchInput.addEventListener('input', renderMenu);
 
-    // ===== 5. สั่ง / ลบ =====
+    // ===== 6. สั่ง / ลบ =====
     async function addOrder(menuItemId, quantity) {
       const name = myName();
       if (!name) {
@@ -337,7 +567,10 @@
         showStatus('ใส่ชื่อของคุณก่อนนะ', true);
         return false;
       }
-      const { error } = await db.from('orders').insert({ person_name: name, menu_item_id: menuItemId, quantity });
+      if (!currentBookingId) { showStatus('เลือกงานก่อนนะ', true); return false; }
+      const { error } = await db.from('orders').insert({
+        booking_id: currentBookingId, person_name: name, menu_item_id: menuItemId, quantity,
+      });
       if (error) { showStatus('สั่งไม่สำเร็จ: ' + error.message, true); return false; }
       showStatus(`สั่ง ${itemLabel(menuById.get(menuItemId))} × ${quantity} แล้ว`);
       await loadOrders();
@@ -350,20 +583,13 @@
       await loadOrders();
     }
 
-    document.getElementById('clear-all').addEventListener('click', async () => {
-      if (orders.length === 0) return;
-      if (!confirm('ล้างรายการสั่งของทุกคนทั้งหมด? (ย้อนกลับไม่ได้)')) return;
-      // ต้องมีเงื่อนไขเสมอเวลาลบ เลยใช้ "id ไม่เป็น null" = ทุกแถว
-      const { error } = await db.from('orders').delete().not('id', 'is', null);
-      if (error) { showStatus('ล้างไม่สำเร็จ: ' + error.message, true); return; }
-      showStatus('ล้างรายการแล้ว');
-      await loadOrders();
-    });
-
-    // ===== 6. รายการสั่งรวม =====
+    // ===== 7. รายการสั่งรวม =====
     async function loadOrders() {
-      const { data, error } = await db.from('orders').select('*').order('created_at');
+      const bookingId = currentBookingId;
+      if (!bookingId) { orders = []; renderOrders(); return; }
+      const { data, error } = await db.from('orders').select('*').eq('booking_id', bookingId).order('created_at');
       if (error) { showStatus('โหลดรายการสั่งไม่ได้: ' + error.message, true); return; }
+      if (bookingId !== currentBookingId) return;   // ระหว่างโหลดมีคนสลับไปงานอื่นแล้ว
       orders = data.filter((o) => menuById.has(o.menu_item_id));
       renderOrders();
     }
@@ -447,25 +673,32 @@
       }));
     }
 
-    // ===== 7. Realtime: มีคนสั่ง/ลบเมื่อไหร่ ทุกเครื่องโหลดรายการใหม่ทันที =====
+    // ===== 8. Realtime: มีคนจอง/สั่ง/ลบเมื่อไหร่ ทุกเครื่องโหลดข้อมูลใหม่ทันที =====
     function subscribeOrders() {
-      db.channel('kungten-order-orders')
+      db.channel('kungten-order')
         .on('postgres_changes', { event: '*', schema: 'kungten_order', table: 'orders' }, () => loadOrders())
+        .on('postgres_changes', { event: '*', schema: 'kungten_order', table: 'bookings' }, async () => {
+          const before = currentBookingId;
+          await loadBookings();
+          if (currentBookingId !== before) await loadOrders();
+        })
         .subscribe((status) => {
           const on = status === 'SUBSCRIBED';
           liveEl.textContent = on ? '● อัปเดตสด' : '● ออฟไลน์';
           liveEl.classList.toggle('on', on);
           // ต่อกลับมาได้หลังหลุด: โหลดใหม่เผื่อพลาดอะไรไประหว่างนั้น
-          if (on) loadOrders();
+          if (on) loadBookings().then(loadOrders);
         });
     }
 
     (async function start() {
       if (SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
-        menuListEl.replaceChildren(el('p', { className: 'empty', textContent: 'ยังไม่ได้ใส่ SUPABASE_URL และ SUPABASE_KEY ในไฟล์ index.html' }));
+        noBookingEl.textContent = 'ยังไม่ได้ใส่ SUPABASE_URL และ SUPABASE_KEY ในไฟล์ index.html';
+        noBookingEl.hidden = false;
         return;
       }
       if (await loadMenu()) {
+        await loadBookings();
         await loadOrders();
         subscribeOrders();
       }

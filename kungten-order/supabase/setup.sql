@@ -1,7 +1,7 @@
--- Kungten-Order: ระบบสั่งอาหารรวม ร้านกุ้งเต้น
--- รันไฟล์นี้ครั้งเดียวใน Supabase SQL Editor ของโปรเจกต์ที่ใช้ร่วมกัน (voraphon-apps)
+-- Kungten-Order: ระบบจองห้อง + สั่งอาหารรวม ร้านกุ้งเต้น
+-- รันไฟล์นี้ใน Supabase SQL Editor ของโปรเจกต์ที่ใช้ร่วมกัน (voraphon-apps)
 -- ทุกอย่างของแอปนี้อยู่ใน schema "kungten_order" แยกจากแอปอื่น
--- รันซ้ำได้ แต่ระวัง: จะล้างเมนูและรายการสั่งทั้งหมดแล้วใส่เมนูใหม่
+-- รันซ้ำได้ แต่ระวัง: จะล้างการจอง เมนู และรายการสั่งทั้งหมด แล้วใส่ข้อมูลตั้งต้นใหม่
 
 create schema if not exists kungten_order;
 
@@ -17,51 +17,78 @@ create table if not exists kungten_order.menu_items (
   available    boolean not null default true
 );
 
--- รายการสั่ง: 1 แถว = คนหนึ่งสั่งเมนูหนึ่ง กี่ที่
+-- การจอง: 1 แถว = นัดกินข้าว 1 ครั้ง (วัน รอบ ห้อง)
+create table if not exists kungten_order.bookings (
+  id             uuid primary key default gen_random_uuid(),
+  created_at     timestamptz not null default now(),
+  title          text    check (title is null or char_length(title) <= 80),   -- หัวข้องาน เช่น เลี้ยงส่งผู้บริหาร
+  booking_date   date    not null,
+  session        text    not null check (session in ('เช้า', 'เย็น')),        -- เช้า 11:00-17:00, เย็น 18:00-24:00
+  start_time     time,                                                        -- เวลาจริง (ไม่บังคับ)
+  end_time       time,
+  room           text    check (room is null or char_length(room) <= 60),
+  booked_by      text    check (booked_by is null or char_length(booked_by) <= 60),
+  deposit_paid   boolean not null default false,
+  deposit_amount integer check (deposit_amount is null or deposit_amount >= 0)
+);
+
+-- รายการสั่ง: 1 แถว = คนหนึ่งสั่งเมนูหนึ่ง กี่ที่ ในการจองหนึ่ง
 create table if not exists kungten_order.orders (
   id           uuid primary key default gen_random_uuid(),
   created_at   timestamptz not null default now(),
+  booking_id   uuid    not null references kungten_order.bookings(id) on delete cascade,
   person_name  text    not null check (char_length(btrim(person_name)) between 1 and 40),
   menu_item_id bigint  not null references kungten_order.menu_items(id) on delete cascade,
   quantity     integer not null check (quantity between 1 and 99)
 );
+create index if not exists orders_booking_id_idx on kungten_order.orders (booking_id);
 
--- สิทธิ์: ไม่มีระบบล็อกอิน ใครเปิดเว็บก็ดูเมนู สั่ง และลบรายการสั่งได้ (key ฝั่งเว็บคือ role "anon")
+-- สิทธิ์: ไม่มีระบบล็อกอิน ใครเปิดเว็บก็ดูเมนู สร้าง/แก้การจอง สั่ง และลบรายการสั่งได้ (key ฝั่งเว็บคือ role "anon")
 grant usage on schema kungten_order to anon, authenticated;
 grant select on kungten_order.menu_items to anon, authenticated;
-grant select, insert, update, delete on kungten_order.orders to anon, authenticated;
+grant select, insert, update, delete on kungten_order.bookings to anon, authenticated;
+grant select, insert, update, delete on kungten_order.orders   to anon, authenticated;
 
 alter table kungten_order.menu_items enable row level security;
+alter table kungten_order.bookings   enable row level security;
 alter table kungten_order.orders     enable row level security;
 
 drop policy if exists "anyone can read menu" on kungten_order.menu_items;
 create policy "anyone can read menu" on kungten_order.menu_items
   for select to anon, authenticated using (true);
 
-drop policy if exists "anyone can read orders"   on kungten_order.orders;
-drop policy if exists "anyone can add orders"    on kungten_order.orders;
-drop policy if exists "anyone can change orders" on kungten_order.orders;
-drop policy if exists "anyone can delete orders" on kungten_order.orders;
-create policy "anyone can read orders"   on kungten_order.orders for select to anon, authenticated using (true);
-create policy "anyone can add orders"    on kungten_order.orders for insert to anon, authenticated with check (true);
-create policy "anyone can change orders" on kungten_order.orders for update to anon, authenticated using (true) with check (true);
-create policy "anyone can delete orders" on kungten_order.orders for delete to anon, authenticated using (true);
-
--- Realtime: ให้ทุกเครื่องเห็นรายการสั่งใหม่ทันทีโดยไม่ต้องรีเฟรช
 do $$
+declare t text;
 begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'kungten_order' and tablename = 'orders'
-  ) then
-    alter publication supabase_realtime add table kungten_order.orders;
-  end if;
+  foreach t in array array['bookings', 'orders'] loop
+    execute format('drop policy if exists "anyone can read"   on kungten_order.%I', t);
+    execute format('drop policy if exists "anyone can add"    on kungten_order.%I', t);
+    execute format('drop policy if exists "anyone can change" on kungten_order.%I', t);
+    execute format('drop policy if exists "anyone can delete" on kungten_order.%I', t);
+    execute format('create policy "anyone can read"   on kungten_order.%I for select to anon, authenticated using (true)', t);
+    execute format('create policy "anyone can add"    on kungten_order.%I for insert to anon, authenticated with check (true)', t);
+    execute format('create policy "anyone can change" on kungten_order.%I for update to anon, authenticated using (true) with check (true)', t);
+    execute format('create policy "anyone can delete" on kungten_order.%I for delete to anon, authenticated using (true)', t);
+
+    -- Realtime: ให้ทุกเครื่องเห็นการจองและรายการสั่งใหม่ทันทีโดยไม่ต้องรีเฟรช
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'kungten_order' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table kungten_order.%I', t);
+    end if;
+  end loop;
 end $$;
+
+-- การจองแรก (ตามที่คอนเฟิร์มกับร้านทาง LINE) ยังไม่ได้ตั้งหัวข้องาน แก้ในหน้าเว็บได้
+delete from kungten_order.orders;
+delete from kungten_order.bookings;
+insert into kungten_order.bookings (booking_date, session, start_time, end_time, room, booked_by, deposit_paid)
+values ('2026-10-12', 'เย็น', '17:00', '23:00', 'ห้องกุ้งซ่า 12', 'คุณวรพล', true);
 
 -- ข้อมูลเมนู (ถอดจากรูปเมนูร้านกุ้งเต้น)
 -- เมนูหลายราคา: ป้าย "เล็ก/กลาง/ใหญ่" เป็นการเดา เพราะในเมนูเขียนแค่ตัวเลข
 -- unit "ขีด" = ราคาต่อขีด (100 กรัม), จำนวนที่สั่ง = จำนวนขีดโดยประมาณ
-delete from kungten_order.orders;
 delete from kungten_order.menu_items;
 insert into kungten_order.menu_items (category, name, option_label, price, unit, sort_order) values
   ('เมนูขายดี', 'กุ้งแม่น้ำเต้น', null, 600, 'จาน', 10),
