@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สั่งอาหารรวม · กุ้งเต้น</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+      margin: 0;
+      padding: 16px 12px 96px;
+    }
+    .card {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    [hidden] { display: none !important; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .sub { margin: 0 0 16px; font-size: 14px; color: #6b7280; }
+    input[type="text"], input[type="search"], select {
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      min-width: 0;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .name-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .name-row label { flex: none; font-size: 14px; color: #374151; }
+    .name-row input { flex: 1; }
+    .name-row input.missing { border-color: #dc2626; background: #fef2f2; }
+
+    .tabs { display: flex; gap: 4px; background: #f3f4f6; border-radius: 10px; padding: 4px; margin-bottom: 12px; }
+    .tabs button { flex: 1; background: transparent; color: #374151; padding: 8px; }
+    .tabs button.active { background: #fff; color: #c2410c; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    #search { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+    .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; }
+    .chips button {
+      flex: none;
+      background: #f3f4f6;
+      color: #374151;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 999px;
+    }
+    .chips button.active { background: #ea580c; color: #fff; }
+
+    h2 { font-size: 16px; color: #c2410c; margin: 16px 0 4px; }
+    .dish {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .dish .info { flex: 1 1 150px; min-width: 0; }
+    .dish .dname { word-break: break-word; }
+    .dish .price { font-size: 13px; color: #6b7280; }
+    .dish .controls { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+    .dish select { padding: 6px 8px; font-size: 14px; }
+    .stepper { display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 8px; }
+    .stepper button { background: transparent; padding: 6px 10px; color: #374151; }
+    .stepper span { min-width: 22px; text-align: center; }
+    .order-btn { background: #16a34a; color: #fff; padding: 8px 14px; }
+
+    .view-toggle { display: flex; gap: 6px; margin-bottom: 8px; }
+    .view-toggle button { background: #f3f4f6; color: #374151; padding: 6px 12px; font-size: 14px; border-radius: 999px; }
+    .view-toggle button.active { background: #1f2937; color: #fff; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    .line { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .line .qty { flex: none; font-weight: 600; color: #c2410c; min-width: 36px; }
+    .line .what { flex: 1; word-break: break-word; }
+    .line .who { display: block; font-size: 13px; color: #6b7280; }
+    .line .amount { flex: none; font-size: 14px; color: #374151; }
+    .delete { background: transparent; color: #dc2626; padding: 2px 8px; }
+    .person { margin-top: 12px; }
+    .person h3 { display: flex; justify-content: space-between; font-size: 15px; margin: 0; padding: 6px 10px; background: #fff7ed; border-radius: 8px; }
+    .person.me h3 { background: #ffedd5; }
+    .total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; margin-top: 16px; padding-top: 12px; border-top: 2px solid #1f2937; }
+    .hint { font-size: 13px; color: #6b7280; margin-top: 6px; }
+    .empty { color: #9ca3af; text-align: center; padding: 24px 0; }
+    .clear-all { margin-top: 20px; background: #fee2e2; color: #b91c1c; font-size: 14px; }
+
+    #status {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      max-width: calc(100% - 32px);
+      background: #1f2937;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #status.error { background: #dc2626; }
+    .live { font-size: 12px; color: #9ca3af; }
+    .live.on { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>สั่งอาหารรวม · กุ้งเต้น</h1>
+    <p class="sub">ใส่ชื่อ เลือกเมนู แล้วกด "สั่ง" ทุกคนจะเห็นรายการรวมกันทันที <span id="live" class="live">● ออฟไลน์</span></p>
+
+    <div class="name-row">
+      <label for="name-input">ชื่อของคุณ</label>
+      <input type="text" id="name-input" maxlength="40" placeholder="เช่น เก่ง" autocomplete="nickname">
+    </div>
+
+    <div class="tabs">
+      <button type="button" data-tab="menu" class="active">เมนู</button>
+      <button type="button" data-tab="orders">รายการสั่งรวม (<span id="order-count">0</span>)</button>
+    </div>
+
+    <!-- แท็บเมนู -->
+    <section id="menu-view">
+      <input type="search" id="search" placeholder="ค้นหาเมนู เช่น กุ้ง, ต้มยำ">
+      <div class="chips" id="chips"></div>
+      <div id="menu-list"><p class="empty">กำลังโหลดเมนู...</p></div>
+    </section>
+
+    <!-- แท็บรายการสั่งรวม -->
+    <section id="orders-view" hidden>
+      <div class="view-toggle">
+        <button type="button" data-view="dish" class="active">รวมตามเมนู (ไว้บอกร้าน)</button>
+        <button type="button" data-view="person">แยกตามคน</button>
+      </div>
+      <div id="orders-list"></div>
+      <div class="total"><span>รวมทั้งหมด</span><span id="grand-total">0 บาท</span></div>
+      <p class="hint" id="total-hint" hidden></p>
+      <button type="button" class="clear-all" id="clear-all">ล้างรายการสั่งทั้งหมด (เริ่มรอบใหม่)</button>
+    </section>
+  </div>
+
+  <div id="status" hidden></div>
+
+  <!-- ไลบรารีของ Supabase สำหรับคุยกับฐานข้อมูลจากหน้าเว็บ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ===== 1. เชื่อมต่อกับโปรเจกต์ Supabase ที่ใช้ร่วมกันหลายแอป =====
+    // ใส่ Project URL และ Publishable key ของโปรเจกต์ voraphon-apps
+    // (Supabase > Project Settings > API Keys) ค่าพวกนี้เปิดเผยในหน้าเว็บได้
+    const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+    const SUPABASE_KEY = 'YOUR-PUBLISHABLE-KEY';
+    // แอปนี้ใช้ตารางใน schema "food_order" เท่านั้น ไม่ยุ่งกับแอปอื่นในโปรเจกต์เดียวกัน
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'food_order' } });
+
+    const nameInput = document.getElementById('name-input');
+    const searchInput = document.getElementById('search');
+    const chipsEl = document.getElementById('chips');
+    const menuListEl = document.getElementById('menu-list');
+    const ordersListEl = document.getElementById('orders-list');
+    const orderCountEl = document.getElementById('order-count');
+    const grandTotalEl = document.getElementById('grand-total');
+    const totalHintEl = document.getElementById('total-hint');
+    const statusEl = document.getElementById('status');
+    const liveEl = document.getElementById('live');
+
+    let menuItems = [];          // แถวจากตาราง menu_items
+    let menuById = new Map();
+    let orders = [];             // แถวจากตาราง orders
+    let activeCategory = 'ทั้งหมด';
+    let orderView = 'dish';
+    let statusTimer = null;
+
+    function showStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'error' : '';
+      statusEl.hidden = false;
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => { statusEl.hidden = true; }, isError ? 5000 : 2000);
+    }
+
+    // สร้าง element แบบสั้น ๆ (ใช้ textContent เสมอ กันโค้ดแปลก ๆ ในชื่อที่คนพิมพ์มา)
+    function el(tag, props = {}, ...children) {
+      const node = document.createElement(tag);
+      Object.assign(node, props);
+      for (const child of children) node.append(child);
+      return node;
+    }
+
+    const baht = (n) => n.toLocaleString('th-TH') + ' บาท';
+
+    function priceText(item) {
+      if (item.price == null) return 'สอบถามราคา';
+      if (item.unit === 'ขีด') return 'ขีดละ ' + item.price.toLocaleString('th-TH');
+      if (item.unit === 'กิโล') return 'กิโลละ ' + item.price.toLocaleString('th-TH');
+      return item.price.toLocaleString('th-TH') + ' บาท';
+    }
+
+    function itemLabel(item) {
+      return item.option_label ? `${item.name} (${item.option_label})` : item.name;
+    }
+
+    // ===== 2. ชื่อผู้สั่ง: จำไว้ในเครื่อง ไม่ต้องพิมพ์ใหม่ทุกครั้ง =====
+    try { nameInput.value = localStorage.getItem('food_order_name') || ''; } catch (e) {}
+    nameInput.addEventListener('input', () => {
+      nameInput.classList.remove('missing');
+      try { localStorage.setItem('food_order_name', nameInput.value.trim()); } catch (e) {}
+      if (orderView === 'person') renderOrders();
+    });
+    const myName = () => nameInput.value.trim();
+
+    // ===== 3. แท็บ =====
+    document.querySelectorAll('.tabs button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b === btn));
+        document.getElementById('menu-view').hidden = btn.dataset.tab !== 'menu';
+        document.getElementById('orders-view').hidden = btn.dataset.tab !== 'orders';
+      });
+    });
+    document.querySelectorAll('.view-toggle button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        orderView = btn.dataset.view;
+        document.querySelectorAll('.view-toggle button').forEach((b) => b.classList.toggle('active', b === btn));
+        renderOrders();
+      });
+    });
+
+    // ===== 4. เมนู =====
+    async function loadMenu() {
+      const { data, error } = await db
+        .from('menu_items')
+        .select('*')
+        .eq('available', true)
+        .order('sort_order');
+      if (error) {
+        menuListEl.replaceChildren(el('p', { className: 'empty', textContent: 'โหลดเมนูไม่ได้: ' + error.message }));
+        return false;
+      }
+      menuItems = data;
+      menuById = new Map(data.map((m) => [m.id, m]));
+      renderChips();
+      renderMenu();
+      return true;
+    }
+
+    function categories() {
+      return ['ทั้งหมด', ...new Set(menuItems.map((m) => m.category))];
+    }
+
+    function renderChips() {
+      chipsEl.replaceChildren(...categories().map((cat) => {
+        const b = el('button', { type: 'button', textContent: cat, className: cat === activeCategory ? 'active' : '' });
+        b.addEventListener('click', () => { activeCategory = cat; renderChips(); renderMenu(); });
+        return b;
+      }));
+    }
+
+    function renderMenu() {
+      const q = searchInput.value.trim().toLowerCase();
+      // รวมแถวที่ชื่อเดียวกันในหมวดเดียวกันเป็น 1 เมนู (เช่น ข้าวผัด เล็ก/กลาง/ใหญ่)
+      const groups = new Map();
+      for (const item of menuItems) {
+        if (activeCategory !== 'ทั้งหมด' && item.category !== activeCategory) continue;
+        if (q && !item.name.toLowerCase().includes(q)) continue;
+        // ตอนค้นหาในหมวด "ทั้งหมด" ไม่ต้องโชว์เมนูขายดีซ้ำ
+        if (q && activeCategory === 'ทั้งหมด' && item.category === 'เมนูขายดี'
+            && menuItems.some((m) => m.category !== 'เมนูขายดี' && m.name === item.name)) continue;
+        const key = item.category + '|' + item.name;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      }
+
+      const nodes = [];
+      let lastCat = null;
+      for (const options of groups.values()) {
+        const cat = options[0].category;
+        if (cat !== lastCat) { nodes.push(el('h2', { textContent: cat })); lastCat = cat; }
+        nodes.push(dishRow(options));
+      }
+      if (nodes.length === 0) nodes.push(el('p', { className: 'empty', textContent: 'ไม่พบเมนู' }));
+      menuListEl.replaceChildren(...nodes);
+    }
+
+    function dishRow(options) {
+      const first = options[0];
+      const priceEl = el('div', { className: 'price' });
+      let select = null;
+      if (options.length > 1) {
+        select = el('select', {}, ...options.map((o) =>
+          el('option', { value: o.id, textContent: `${o.option_label} ${o.price}` })));
+        priceEl.textContent = options.map((o) => o.price).join(' / ') + ' บาท';
+      } else {
+        priceEl.textContent = priceText(first) + (first.unit === 'ขีด' ? ' (จำนวน = กี่ขีด)' : '');
+      }
+
+      let qty = 1;
+      const qtyEl = el('span', { textContent: '1' });
+      const minus = el('button', { type: 'button', textContent: '−', ariaLabel: 'ลด' });
+      const plus = el('button', { type: 'button', textContent: '+', ariaLabel: 'เพิ่ม' });
+      minus.addEventListener('click', () => { qty = Math.max(1, qty - 1); qtyEl.textContent = qty; });
+      plus.addEventListener('click', () => { qty = Math.min(99, qty + 1); qtyEl.textContent = qty; });
+
+      const orderBtn = el('button', { type: 'button', className: 'order-btn', textContent: 'สั่ง' });
+      orderBtn.addEventListener('click', async () => {
+        const itemId = select ? Number(select.value) : first.id;
+        orderBtn.disabled = true;
+        const ok = await addOrder(itemId, qty);
+        orderBtn.disabled = false;
+        if (ok) { qty = 1; qtyEl.textContent = '1'; }
+      });
+
+      return el('div', { className: 'dish' },
+        el('div', { className: 'info' }, el('div', { className: 'dname', textContent: first.name }), priceEl),
+        el('div', { className: 'controls' }, ...(select ? [select] : []),
+          el('div', { className: 'stepper' }, minus, qtyEl, plus), orderBtn));
+    }
+
+    searchInput.addEventListener('input', renderMenu);
+
+    // ===== 5. สั่ง / ลบ =====
+    async function addOrder(menuItemId, quantity) {
+      const name = myName();
+      if (!name) {
+        nameInput.classList.add('missing');
+        nameInput.focus();
+        showStatus('ใส่ชื่อของคุณก่อนนะ', true);
+        return false;
+      }
+      const { error } = await db.from('orders').insert({ person_name: name, menu_item_id: menuItemId, quantity });
+      if (error) { showStatus('สั่งไม่สำเร็จ: ' + error.message, true); return false; }
+      showStatus(`สั่ง ${itemLabel(menuById.get(menuItemId))} × ${quantity} แล้ว`);
+      await loadOrders();
+      return true;
+    }
+
+    async function deleteOrder(id) {
+      const { error } = await db.from('orders').delete().eq('id', id);
+      if (error) { showStatus('ลบไม่สำเร็จ: ' + error.message, true); return; }
+      await loadOrders();
+    }
+
+    document.getElementById('clear-all').addEventListener('click', async () => {
+      if (orders.length === 0) return;
+      if (!confirm('ล้างรายการสั่งของทุกคนทั้งหมด? (ย้อนกลับไม่ได้)')) return;
+      // ต้องมีเงื่อนไขเสมอเวลาลบ เลยใช้ "id ไม่เป็น null" = ทุกแถว
+      const { error } = await db.from('orders').delete().not('id', 'is', null);
+      if (error) { showStatus('ล้างไม่สำเร็จ: ' + error.message, true); return; }
+      showStatus('ล้างรายการแล้ว');
+      await loadOrders();
+    });
+
+    // ===== 6. รายการสั่งรวม =====
+    async function loadOrders() {
+      const { data, error } = await db.from('orders').select('*').order('created_at');
+      if (error) { showStatus('โหลดรายการสั่งไม่ได้: ' + error.message, true); return; }
+      orders = data.filter((o) => menuById.has(o.menu_item_id));
+      renderOrders();
+    }
+
+    function lineAmount(order) {
+      const item = menuById.get(order.menu_item_id);
+      return item.price == null ? null : item.price * order.quantity;
+    }
+
+    function renderOrders() {
+      orderCountEl.textContent = orders.reduce((sum, o) => sum + o.quantity, 0);
+      let total = 0;
+      let unpriced = 0;
+      for (const o of orders) {
+        const amount = lineAmount(o);
+        if (amount == null) unpriced++; else total += amount;
+      }
+      grandTotalEl.textContent = baht(total);
+      const hasByWeight = orders.some((o) => ['ขีด', 'กิโล'].includes(menuById.get(o.menu_item_id).unit));
+      const hints = [];
+      if (unpriced) hints.push('มีเมนูที่ต้องสอบถามราคา ยังไม่รวมในยอดนี้');
+      if (hasByWeight) hints.push('เมนูชั่งน้ำหนักเป็นราคาประมาณ ร้านจะคิดตามน้ำหนักจริง');
+      totalHintEl.textContent = hints.join(' · ');
+      totalHintEl.hidden = hints.length === 0;
+
+      if (orders.length === 0) {
+        ordersListEl.replaceChildren(el('p', { className: 'empty', textContent: 'ยังไม่มีใครสั่ง' }));
+        return;
+      }
+      ordersListEl.replaceChildren(orderView === 'dish' ? renderByDish() : renderByPerson());
+    }
+
+    // รวมตามเมนู: เมนูเดียวกัน (ชื่อ + ขนาด) รวมจำนวนจากทุกคน
+    function renderByDish() {
+      const groups = new Map();
+      for (const o of orders) {
+        const item = menuById.get(o.menu_item_id);
+        const key = itemLabel(item) + '|' + item.price;
+        if (!groups.has(key)) groups.set(key, { item, qty: 0, people: new Map() });
+        const g = groups.get(key);
+        g.qty += o.quantity;
+        g.people.set(o.person_name, (g.people.get(o.person_name) || 0) + o.quantity);
+      }
+      return el('ul', {}, ...[...groups.values()].map((g) => {
+        const who = [...g.people].map(([n, q]) => q > 1 ? `${n} ×${q}` : n).join(', ');
+        const amount = g.item.price == null ? 'สอบถามราคา' : (g.item.price * g.qty).toLocaleString('th-TH');
+        return el('li', { className: 'line' },
+          el('span', { className: 'qty', textContent: '×' + g.qty + (['ขีด', 'กิโล'].includes(g.item.unit) ? ' ' + g.item.unit : '') }),
+          el('span', { className: 'what', textContent: itemLabel(g.item) }, el('span', { className: 'who', textContent: who })),
+          el('span', { className: 'amount', textContent: amount }));
+      }));
+    }
+
+    // แยกตามคน: เห็นยอดของแต่ละคน และลบรายการของตัวเองได้
+    function renderByPerson() {
+      const people = new Map();
+      for (const o of orders) {
+        if (!people.has(o.person_name)) people.set(o.person_name, []);
+        people.get(o.person_name).push(o);
+      }
+      const me = myName();
+      return el('div', {}, ...[...people].map(([name, list]) => {
+        const subtotal = list.reduce((s, o) => s + (lineAmount(o) || 0), 0);
+        const isMe = name === me;
+        return el('div', { className: 'person' + (isMe ? ' me' : '') },
+          el('h3', {}, el('span', { textContent: name + (isMe ? ' (คุณ)' : '') }), el('span', { textContent: baht(subtotal) })),
+          el('ul', {}, ...list.map((o) => {
+            const item = menuById.get(o.menu_item_id);
+            const amount = lineAmount(o);
+            const li = el('li', { className: 'line' },
+              el('span', { className: 'qty', textContent: '×' + o.quantity }),
+              el('span', { className: 'what', textContent: itemLabel(item) }),
+              el('span', { className: 'amount', textContent: amount == null ? 'สอบถามราคา' : amount.toLocaleString('th-TH') }));
+            if (isMe) {
+              const del = el('button', { type: 'button', className: 'delete', textContent: '✕', title: 'ลบรายการนี้' });
+              del.addEventListener('click', () => deleteOrder(o.id));
+              li.append(del);
+            }
+            return li;
+          })));
+      }));
+    }
+
+    // ===== 7. Realtime: มีคนสั่ง/ลบเมื่อไหร่ ทุกเครื่องโหลดรายการใหม่ทันที =====
+    function subscribeOrders() {
+      db.channel('food-order-orders')
+        .on('postgres_changes', { event: '*', schema: 'food_order', table: 'orders' }, () => loadOrders())
+        .subscribe((status) => {
+          const on = status === 'SUBSCRIBED';
+          liveEl.textContent = on ? '● อัปเดตสด' : '● ออฟไลน์';
+          liveEl.classList.toggle('on', on);
+          // ต่อกลับมาได้หลังหลุด: โหลดใหม่เผื่อพลาดอะไรไประหว่างนั้น
+          if (on) loadOrders();
+        });
+    }
+
+    (async function start() {
+      if (SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
+        menuListEl.replaceChildren(el('p', { className: 'empty', textContent: 'ยังไม่ได้ใส่ SUPABASE_URL และ SUPABASE_KEY ในไฟล์ index.html' }));
+        return;
+      }
+      if (await loadMenu()) {
+        await loadOrders();
+        subscribeOrders();
+      }
+    })();
+  </script>
+</body>
+</html>
