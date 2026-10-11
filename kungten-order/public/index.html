@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>สั่งอาหารรวม · กุ้งเต้น</title>
+  <title>Kungten-Order · ร้านกุ้งเต้น</title>
   <style>
     body {
       font-family: "Segoe UI", Tahoma, sans-serif;
@@ -118,7 +118,7 @@
 </head>
 <body>
   <div class="card">
-    <h1>สั่งอาหารรวม · กุ้งเต้น</h1>
+    <h1>Kungten-Order · ร้านกุ้งเต้น</h1>
     <p class="sub">ใส่ชื่อ เลือกเมนู แล้วกด "สั่ง" ทุกคนจะเห็นรายการรวมกันทันที <span id="live" class="live">● ออฟไลน์</span></p>
 
     <div class="name-row">
@@ -161,8 +161,8 @@
     // (Supabase > Project Settings > API Keys) ค่าพวกนี้เปิดเผยในหน้าเว็บได้
     const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
     const SUPABASE_KEY = 'YOUR-PUBLISHABLE-KEY';
-    // แอปนี้ใช้ตารางใน schema "food_order" เท่านั้น ไม่ยุ่งกับแอปอื่นในโปรเจกต์เดียวกัน
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'food_order' } });
+    // แอปนี้ใช้ตารางใน schema "kungten_order" เท่านั้น ไม่ยุ่งกับแอปอื่นในโปรเจกต์เดียวกัน
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'kungten_order' } });
 
     const nameInput = document.getElementById('name-input');
     const searchInput = document.getElementById('search');
@@ -212,10 +212,10 @@
     }
 
     // ===== 2. ชื่อผู้สั่ง: จำไว้ในเครื่อง ไม่ต้องพิมพ์ใหม่ทุกครั้ง =====
-    try { nameInput.value = localStorage.getItem('food_order_name') || ''; } catch (e) {}
+    try { nameInput.value = localStorage.getItem('kungten_order_name') || ''; } catch (e) {}
     nameInput.addEventListener('input', () => {
       nameInput.classList.remove('missing');
-      try { localStorage.setItem('food_order_name', nameInput.value.trim()); } catch (e) {}
+      try { localStorage.setItem('kungten_order_name', nameInput.value.trim()); } catch (e) {}
       if (orderView === 'person') renderOrders();
     });
     const myName = () => nameInput.value.trim();
@@ -449,8 +449,8 @@
 
     // ===== 7. Realtime: มีคนสั่ง/ลบเมื่อไหร่ ทุกเครื่องโหลดรายการใหม่ทันที =====
     function subscribeOrders() {
-      db.channel('food-order-orders')
-        .on('postgres_changes', { event: '*', schema: 'food_order', table: 'orders' }, () => loadOrders())
+      db.channel('kungten-order-orders')
+        .on('postgres_changes', { event: '*', schema: 'kungten_order', table: 'orders' }, () => loadOrders())
         .subscribe((status) => {
           const on = status === 'SUBSCRIBED';
           liveEl.textContent = on ? '● อัปเดตสด' : '● ออฟไลน์';

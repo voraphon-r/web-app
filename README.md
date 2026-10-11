@@ -9,4 +9,4 @@ To-do web app (formerly `todo-app`). Live at https://todo.voraphon.com
 
 ## Other apps in this repo
 
-- `food-order/`: group food ordering (open access, Supabase realtime, schema `food_order`). See `food-order/README.md`
+- `kungten-order/`: group food ordering (open access, Supabase realtime, schema `kungten_order`). See `kungten-order/README.md`

@@ -1,12 +1,12 @@
--- ระบบสั่งอาหารรวม (ร้านกุ้งเต้น)
+-- Kungten-Order: ระบบสั่งอาหารรวม ร้านกุ้งเต้น
 -- รันไฟล์นี้ครั้งเดียวใน Supabase SQL Editor ของโปรเจกต์ที่ใช้ร่วมกัน (voraphon-apps)
--- ทุกอย่างของแอปนี้อยู่ใน schema "food_order" แยกจากแอปอื่น
+-- ทุกอย่างของแอปนี้อยู่ใน schema "kungten_order" แยกจากแอปอื่น
 -- รันซ้ำได้ แต่ระวัง: จะล้างเมนูและรายการสั่งทั้งหมดแล้วใส่เมนูใหม่
 
-create schema if not exists food_order;
+create schema if not exists kungten_order;
 
 -- เมนู: 1 แถว = 1 ราคา (เมนูที่มีหลายขนาด จะมีหลายแถว ชื่อเดียวกัน ต่างกันที่ option_label)
-create table if not exists food_order.menu_items (
+create table if not exists kungten_order.menu_items (
   id           bigint generated always as identity primary key,
   category     text    not null,
   name         text    not null,
@@ -18,52 +18,52 @@ create table if not exists food_order.menu_items (
 );
 
 -- รายการสั่ง: 1 แถว = คนหนึ่งสั่งเมนูหนึ่ง กี่ที่
-create table if not exists food_order.orders (
+create table if not exists kungten_order.orders (
   id           uuid primary key default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   person_name  text    not null check (char_length(btrim(person_name)) between 1 and 40),
-  menu_item_id bigint  not null references food_order.menu_items(id) on delete cascade,
+  menu_item_id bigint  not null references kungten_order.menu_items(id) on delete cascade,
   quantity     integer not null check (quantity between 1 and 99)
 );
 
 -- สิทธิ์: ไม่มีระบบล็อกอิน ใครเปิดเว็บก็ดูเมนู สั่ง และลบรายการสั่งได้ (key ฝั่งเว็บคือ role "anon")
-grant usage on schema food_order to anon, authenticated;
-grant select on food_order.menu_items to anon, authenticated;
-grant select, insert, update, delete on food_order.orders to anon, authenticated;
+grant usage on schema kungten_order to anon, authenticated;
+grant select on kungten_order.menu_items to anon, authenticated;
+grant select, insert, update, delete on kungten_order.orders to anon, authenticated;
 
-alter table food_order.menu_items enable row level security;
-alter table food_order.orders     enable row level security;
+alter table kungten_order.menu_items enable row level security;
+alter table kungten_order.orders     enable row level security;
 
-drop policy if exists "anyone can read menu" on food_order.menu_items;
-create policy "anyone can read menu" on food_order.menu_items
+drop policy if exists "anyone can read menu" on kungten_order.menu_items;
+create policy "anyone can read menu" on kungten_order.menu_items
   for select to anon, authenticated using (true);
 
-drop policy if exists "anyone can read orders"   on food_order.orders;
-drop policy if exists "anyone can add orders"    on food_order.orders;
-drop policy if exists "anyone can change orders" on food_order.orders;
-drop policy if exists "anyone can delete orders" on food_order.orders;
-create policy "anyone can read orders"   on food_order.orders for select to anon, authenticated using (true);
-create policy "anyone can add orders"    on food_order.orders for insert to anon, authenticated with check (true);
-create policy "anyone can change orders" on food_order.orders for update to anon, authenticated using (true) with check (true);
-create policy "anyone can delete orders" on food_order.orders for delete to anon, authenticated using (true);
+drop policy if exists "anyone can read orders"   on kungten_order.orders;
+drop policy if exists "anyone can add orders"    on kungten_order.orders;
+drop policy if exists "anyone can change orders" on kungten_order.orders;
+drop policy if exists "anyone can delete orders" on kungten_order.orders;
+create policy "anyone can read orders"   on kungten_order.orders for select to anon, authenticated using (true);
+create policy "anyone can add orders"    on kungten_order.orders for insert to anon, authenticated with check (true);
+create policy "anyone can change orders" on kungten_order.orders for update to anon, authenticated using (true) with check (true);
+create policy "anyone can delete orders" on kungten_order.orders for delete to anon, authenticated using (true);
 
 -- Realtime: ให้ทุกเครื่องเห็นรายการสั่งใหม่ทันทีโดยไม่ต้องรีเฟรช
 do $$
 begin
   if not exists (
     select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'food_order' and tablename = 'orders'
+    where pubname = 'supabase_realtime' and schemaname = 'kungten_order' and tablename = 'orders'
   ) then
-    alter publication supabase_realtime add table food_order.orders;
+    alter publication supabase_realtime add table kungten_order.orders;
   end if;
 end $$;
 
 -- ข้อมูลเมนู (ถอดจากรูปเมนูร้านกุ้งเต้น)
 -- เมนูหลายราคา: ป้าย "เล็ก/กลาง/ใหญ่" เป็นการเดา เพราะในเมนูเขียนแค่ตัวเลข
 -- unit "ขีด" = ราคาต่อขีด (100 กรัม), จำนวนที่สั่ง = จำนวนขีดโดยประมาณ
-delete from food_order.orders;
-delete from food_order.menu_items;
-insert into food_order.menu_items (category, name, option_label, price, unit, sort_order) values
+delete from kungten_order.orders;
+delete from kungten_order.menu_items;
+insert into kungten_order.menu_items (category, name, option_label, price, unit, sort_order) values
   ('เมนูขายดี', 'กุ้งแม่น้ำเต้น', null, 600, 'จาน', 10),
   ('เมนูขายดี', 'กุ้งแม่น้ำจัมโบ้เผา (3-4 ตัว/กิโล)', null, 180, 'ขีด', 20),
   ('เมนูขายดี', 'กุ้งเต้นปทุมธานี', null, 390, 'จาน', 30),
