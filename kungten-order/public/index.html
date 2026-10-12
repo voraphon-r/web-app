@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kungten-Order · ร้านกุ้งเต้น</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fbf8f2;
+      --panel: #ffffff;
+      --line: #ece7df;
+      --text: #1f2d3a;
+      --muted: #6b7280;
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --green-soft: #e8f5ec;
+      --orange: #f97316;
+      --orange-dark: #c2410c;
+      --orange-soft: #fff1e6;
+      --shadow: 0 4px 16px rgba(31, 45, 58, 0.06);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      font-family: "Sarabun", "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0 0 96px;
+      font-size: 16px;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+    h1, h2, h3, .prompt { font-family: "Prompt", "Sarabun", sans-serif; }
+    input, select, button { font-family: inherit; }
+    button { border: none; cursor: pointer; font-size: 16px; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    svg.i { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ส่วนหัว */
+    header { position: relative; overflow: hidden; padding: 24px 0 20px; }
+    .brand { display: flex; gap: 14px; align-items: flex-start; position: relative; z-index: 1; padding-right: 72px; }
+    .logo { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(145deg, #22c55e, #15803d); color: #fff; display: grid; place-items: center; flex: none; box-shadow: 0 6px 14px rgba(22,163,74,0.3); }
+    .logo svg.i { width: 28px; height: 28px; stroke-width: 2.4; }
+    h1 { margin: 0; white-space: nowrap; font-size: clamp(22px, 7vw, 30px); line-height: 1.1; font-weight: 700; color: #183b3a; }
+    .shop { margin: 2px 0 6px; font-family: "Prompt", sans-serif; font-weight: 600; font-size: 18px; color: #183b3a; }
+    .sub { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+    .live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #9ca3af; font-weight: 600; margin-top: 4px; }
+    .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .live.on { color: var(--green); }
+    .deco { position: absolute; top: -30px; right: -40px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #dcf2e1, #c3e8cc 60%, transparent 61%); display: grid; place-items: center; }
+    .deco span { font-size: 64px; transform: translate(-14px, 14px) rotate(-12deg); filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15)); }
+
+    /* กล่อง */
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+
+    /* การจอง */
+    .booking-top { display: flex; gap: 10px; align-items: stretch; }
+    .pill { position: relative; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 6px; min-width: 0; }
+    .pill-select { flex: 1; cursor: pointer; }
+    .pill-select select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+    .ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+    .ico.green { background: var(--green-soft); color: var(--green); }
+    .ico.orange { background: var(--orange-soft); color: var(--orange); }
+    .ico.gray { background: #f1f2f4; color: #4b5563; }
+    .pill-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
+    .pill-text b { font-family: "Prompt", sans-serif; font-weight: 600; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill-text small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill-text small.has-title { color: var(--orange-dark); font-weight: 600; white-space: normal; }
+    .chev { color: var(--muted); flex: none; }
+    .btn-soft { display: inline-flex; align-items: center; gap: 6px; background: var(--green-soft); color: var(--green-dark); font-weight: 600; border-radius: 999px; padding: 0 14px; white-space: nowrap; font-family: "Prompt", sans-serif; font-size: 15px; }
+    .session { margin-top: 10px; }
+    .session .pill-text b { font-size: 20px; }
+    .session em { font-style: normal; font-size: 13px; color: var(--muted); }
+    .session-time { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
+    .details { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 0; }
+    .detail { display: flex; align-items: center; gap: 10px; flex: 1 1 33%; min-width: 120px; padding: 0 10px; border-left: 1px solid var(--line); line-height: 1.3; font-size: 15px; }
+    .detail:first-child { border-left: none; padding-left: 0; }
+    .detail .ico { width: 36px; height: 36px; }
+    @media (max-width: 480px) {
+      .detail { border-left: none; padding: 0; flex-basis: 50%; }
+    }
+    .detail small { display: block; font-size: 12px; color: var(--muted); }
+    .detail b { font-weight: 600; }
+    .detail.paid { color: var(--green-dark); font-weight: 600; }
+    .detail.unpaid { color: #b45309; font-weight: 600; }
+    .edit-link { display: inline-flex; align-items: center; gap: 6px; background: none; color: var(--orange-dark); padding: 10px 0 0; font-size: 14px; text-decoration: underline; }
+    .edit-link svg.i { width: 16px; height: 16px; }
+
+    #booking-form { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 14px; }
+    #booking-form h3 { margin: 0 0 10px; font-size: 17px; }
+    #booking-form label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: #374151; margin-bottom: 10px; }
+    #booking-form label.check { flex-direction: row; align-items: center; margin: 0; white-space: nowrap; }
+    .field { padding: 10px 12px; font-size: 16px; border: 1px solid #d9d4cc; border-radius: 12px; background: #fff; min-width: 0; width: 100%; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 12px; }
+    .pair { display: flex; align-items: center; gap: 6px; }
+    .pair .field { flex: 1; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+    .btn.primary { background: var(--green); color: #fff; }
+    .btn.secondary { background: #eef0f2; color: #374151; }
+    .btn.danger { background: #fee2e2; color: #b91c1c; }
+
+    /* ชื่อผู้สั่ง */
+    .name-card { display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; background: #f6f8fb; }
+    .name-card label { color: var(--muted); font-size: 15px; white-space: nowrap; }
+    .name-card input { flex: 1; min-width: 0; border: none; background: transparent; font-size: 18px; font-weight: 600; color: var(--text); padding: 8px 4px; outline: none; }
+    .name-card .pen { color: #4b5563; }
+    .name-card.missing { border-color: #dc2626; background: #fef2f2; }
+
+    /* แท็บ */
+    .tabs { display: flex; background: #f1f2f4; border-radius: 999px; padding: 4px; margin: 4px 0 14px; }
+    .tabs button { flex: 1 1 auto; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; color: #374151; padding: 12px 10px; border-radius: 999px; font-family: "Prompt", sans-serif; font-size: 15px; }
+    .tabs button[data-tab="menu"] { flex: 0 0 40%; }
+    .tabs button.active { background: var(--orange); color: #fff; font-weight: 600; box-shadow: 0 4px 10px rgba(249,115,22,0.3); }
+
+    /* ค้นหา + หมวด */
+    .search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #ddd8cf; border-radius: 16px; padding: 0 14px; color: var(--muted); }
+    .search input { flex: 1; border: none; outline: none; font-size: 16px; padding: 14px 0; background: transparent; min-width: 0; }
+    .chips { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 6px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chips button { flex: none; display: inline-flex; align-items: center; gap: 6px; background: #f1f2f4; color: #374151; padding: 10px 16px; font-size: 15px; border-radius: 999px; }
+    .chips button.active { background: var(--orange); color: #fff; font-weight: 600; }
+
+    /* เมนู */
+    .cat-head { display: flex; align-items: center; gap: 12px; margin: 18px 0 10px; }
+    .cat-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 16px; border-radius: 999px; background: var(--orange-soft); color: var(--orange); font-size: 17px; font-weight: 600; white-space: nowrap; }
+    .cat-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .dish { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+    .dish .info { flex: 1 1 140px; min-width: 0; }
+    .dish .dname { font-size: 17px; font-weight: 600; word-break: break-word; line-height: 1.35; }
+    .dish .price { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .dish .controls { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+    .dish select { padding: 8px; font-size: 14px; border: 1px solid #ddd8cf; border-radius: 10px; background: #fff; }
+    .stepper { display: flex; align-items: center; border: 1px solid #ddd8cf; border-radius: 12px; background: #fff; }
+    .stepper button { background: transparent; padding: 8px 10px; color: #374151; font-size: 18px; }
+    .stepper span { min-width: 22px; text-align: center; font-weight: 600; }
+    .order-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--green); color: #fff; padding: 10px 14px; border-radius: 12px; font-weight: 600; font-family: "Prompt", sans-serif; }
+    .order-btn svg.i { width: 18px; height: 18px; }
+
+    /* รายการสั่งรวม */
+    .view-toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+    .view-toggle button { background: #f1f2f4; color: #374151; padding: 8px 14px; font-size: 14px; border-radius: 999px; }
+    .view-toggle button.active { background: var(--text); color: #fff; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    .line { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .line .qty { flex: none; font-weight: 700; color: var(--orange-dark); min-width: 38px; }
+    .line .what { flex: 1; word-break: break-word; }
+    .line .who { display: block; font-size: 13px; color: var(--muted); }
+    .line .amount { flex: none; font-size: 15px; }
+    .delete { background: transparent; color: #dc2626; padding: 2px 8px; }
+    .person { margin-top: 12px; }
+    .person h3 { display: flex; justify-content: space-between; font-size: 15px; margin: 0; padding: 8px 12px; background: var(--orange-soft); border-radius: 12px; }
+    .person.me h3 { background: #ffe2c7; }
+    .total { display: flex; justify-content: space-between; font-family: "Prompt", sans-serif; font-size: 19px; font-weight: 600; margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--text); }
+    .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+    .empty { color: #9ca3af; text-align: center; padding: 24px 0; }
+
+    /* แถบสรุปล่างจอ */
+    .cart-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 30%); }
+    .cart-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #cfe9d6; border-radius: 20px; padding: 8px 8px 8px 12px; box-shadow: 0 6px 20px rgba(31,45,58,0.12); }
+    .cart-inner .ico { width: 40px; height: 40px; }
+    .cart-text { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--green-dark); font-weight: 600; line-height: 1.3; }
+    .cart-text small { display: block; color: var(--muted); font-weight: 400; }
+    .cart-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--green-soft); color: var(--green-dark); padding: 10px 12px; border-radius: 14px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .cart-btn svg.i { width: 18px; height: 18px; }
+
+    #status {
+      position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 20;
+      max-width: calc(100% - 32px); background: var(--text); color: #fff;
+      padding: 10px 16px; border-radius: 999px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #status.error { background: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="deco" aria-hidden="true"><span>🦐</span></div>
+      <div class="brand">
+        <div class="logo" data-icon="utensils"></div>
+        <div>
+          <h1>Kungten-Order</h1>
+          <div class="shop">ร้านกุ้งเต้น</div>
+          <p class="sub">เลือกงาน ใส่ชื่อ เลือกเมนู แล้วกด "สั่ง" ทุกคนจะเห็นรายการรวมกันทันที</p>
+          <span id="live" class="live">ออฟไลน์</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ส่วนการจอง: เลือกงานที่จะสั่งอาหาร หรือจองใหม่ -->
+    <section class="panel booking">
+      <div class="booking-top">
+        <label class="pill pill-select" id="booking-pill">
+          <span class="ico green" data-icon="calendar"></span>
+          <span class="pill-text"><b id="bk-date">ยังไม่มีการจอง</b><small id="bk-title">กด "+ จองใหม่" เพื่อเริ่ม</small></span>
+          <span class="chev" data-icon="chevron-down"></span>
+          <select id="booking-select" aria-label="เลือกงาน"></select>
+        </label>
+        <button type="button" class="btn-soft" id="new-booking-btn">+ จองใหม่</button>
+      </div>
+      <div class="pill session" id="bk-session" hidden>
+        <span class="ico green" data-icon="clock"></span>
+        <span class="pill-text"><small id="bk-session-name"></small>
+          <span class="session-time"><b id="bk-session-time"></b><em id="bk-actual"></em></span></span>
+      </div>
+
+      <form id="booking-form" hidden>
+        <h3 id="booking-form-title">จองใหม่</h3>
+        <label>หัวข้องาน
+          <input type="text" class="field" id="b-title" maxlength="80" list="title-options" placeholder="เช่น เลี้ยงส่งผู้บริหาร">
+        </label>
+        <div class="form-grid">
+          <label>วันที่ <input type="date" class="field" id="b-date" required></label>
+          <label>รอบ
+            <select class="field" id="b-session">
+              <option value="เย็น">รอบเย็น 18:00–24:00</option>
+              <option value="เช้า">รอบเช้า 11:00–17:00</option>
+            </select>
+          </label>
+          <label>เวลาจริง (ถ้ามี) <span class="pair"><input type="time" class="field" id="b-start"> – <input type="time" class="field" id="b-end"></span></label>
+          <label>ห้อง <input type="text" class="field" id="b-room" maxlength="60" list="room-options" placeholder="เช่น ห้องกุ้งซ่า 12"></label>
+          <label>จองในนาม <input type="text" class="field" id="b-by" maxlength="60" placeholder="เช่น คุณวรพล"></label>
+          <label>มัดจำ (บาท) <span class="pair"><input type="number" class="field" id="b-deposit" min="0" step="1" placeholder="ไม่ระบุ"> <label class="check"><input type="checkbox" id="b-paid"> จ่ายแล้ว</label></span></label>
+        </div>
+        <datalist id="room-options"></datalist>
+        <datalist id="title-options"></datalist>
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="b-save">บันทึกการจอง</button>
+          <button type="button" class="btn secondary" id="b-cancel">ยกเลิก</button>
+          <button type="button" class="btn danger" id="b-delete" hidden>ลบการจองนี้</button>
+        </div>
+      </form>
+    </section>
+    <section class="panel" id="booking-card" hidden></section>
+    <p class="empty" id="no-booking" hidden>ยังไม่มีการจอง กด "+ จองใหม่" เพื่อเริ่ม</p>
+
+    <!-- ส่วนสั่งอาหาร: แสดงเมื่อเลือกงานแล้ว -->
+    <section id="order-area" hidden>
+      <div class="panel name-card" id="name-card">
+        <span class="ico gray" data-icon="user"></span>
+        <label for="name-input">ชื่อของคุณ</label>
+        <input type="text" id="name-input" maxlength="40" placeholder="พิมพ์ชื่อ" autocomplete="nickname">
+        <span class="pen" data-icon="pencil"></span>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button type="button" data-tab="menu" class="active"><span data-icon="utensils"></span>เมนู</button>
+        <button type="button" data-tab="orders"><span data-icon="list"></span><span>รายการสั่งรวม (<span id="order-count">0</span>)</span></button>
+      </div>
+
+      <!-- แท็บเมนู -->
+      <section id="menu-view">
+        <div class="search"><span data-icon="search"></span><input type="search" id="search" placeholder="ค้นหาเมนู เช่น กุ้ง, ต้มยำ"></div>
+        <div class="chips" id="chips"></div>
+        <div id="menu-list"><p class="empty">กำลังโหลดเมนู...</p></div>
+      </section>
+
+      <!-- แท็บรายการสั่งรวม -->
+      <section id="orders-view" class="panel" hidden>
+        <div class="view-toggle">
+          <button type="button" data-view="dish" class="active">รวมตามเมนู (ไว้บอกร้าน)</button>
+          <button type="button" data-view="person">แยกตามคน</button>
+        </div>
+        <div id="orders-list"></div>
+        <div class="total"><span>รวมทั้งหมด</span><span id="grand-total">0 บาท</span></div>
+        <p class="hint" id="total-hint" hidden></p>
+      </section>
+    </section>
+  </div>
+
+  <!-- แถบสรุปล่างจอ -->
+  <div class="cart-bar" id="cart-bar" hidden>
+    <div class="cart-inner">
+      <span class="ico green" data-icon="cart"></span>
+      <div class="cart-text">สั่งรวมทั้งหมด <span id="cart-count">0</span> รายการ<small id="cart-total">0 บาท</small></div>
+      <button type="button" class="cart-btn" id="cart-btn">ดูรายการสั่งรวม<span data-icon="chevron-right"></span></button>
+    </div>
+  </div>
+
+  <div id="status" hidden></div>
+
+  <!-- ไลบรารีของ Supabase สำหรับคุยกับฐานข้อมูลจากหน้าเว็บ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ===== 1. เชื่อมต่อกับโปรเจกต์ Supabase ที่ใช้ร่วมกันหลายแอป =====
+    // ใส่ Project URL และ Publishable key ของโปรเจกต์ voraphon-apps
+    // (Supabase > Project Settings > API Keys) ค่าพวกนี้เปิดเผยในหน้าเว็บได้
+    const SUPABASE_URL = 'https://qfxqjpqpytkaymlyjuuz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_7A3d5nMlhvAu6vLB2VvG3A_uyKserby';
+    // แอปนี้ใช้ตารางใน schema "kungten_order" เท่านั้น ไม่ยุ่งกับแอปอื่นในโปรเจกต์เดียวกัน
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'kungten_order' } });
+
+    const nameInput = document.getElementById('name-input');
+    const searchInput = document.getElementById('search');
+    const chipsEl = document.getElementById('chips');
+    const menuListEl = document.getElementById('menu-list');
+    const ordersListEl = document.getElementById('orders-list');
+    const orderCountEl = document.getElementById('order-count');
+    const grandTotalEl = document.getElementById('grand-total');
+    const totalHintEl = document.getElementById('total-hint');
+    const statusEl = document.getElementById('status');
+    const liveEl = document.getElementById('live');
+
+    let menuItems = [];          // แถวจากตาราง menu_items
+    let menuById = new Map();
+    let orders = [];             // แถวจากตาราง orders
+    let activeCategory = 'ทั้งหมด';
+    let orderView = 'dish';
+    let statusTimer = null;
+
+    function showStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? 'error' : '';
+      statusEl.hidden = false;
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => { statusEl.hidden = true; }, isError ? 5000 : 2000);
+    }
+
+    // สร้าง element แบบสั้น ๆ (ใช้ textContent เสมอ กันโค้ดแปลก ๆ ในชื่อที่คนพิมพ์มา)
+    function el(tag, props = {}, ...children) {
+      const node = document.createElement(tag);
+      Object.assign(node, props);
+      for (const child of children) node.append(child);
+      return node;
+    }
+
+    const baht = (n) => n.toLocaleString('th-TH') + ' บาท';
+
+    function priceText(item) {
+      if (item.price == null) return 'สอบถามราคา';
+      if (item.unit === 'ขีด') return 'ขีดละ ' + item.price.toLocaleString('th-TH');
+      if (item.unit === 'กิโล') return 'กิโลละ ' + item.price.toLocaleString('th-TH');
+      return item.price.toLocaleString('th-TH') + ' บาท';
+    }
+
+    function itemLabel(item) {
+      return item.option_label ? `${item.name} (${item.option_label})` : item.name;
+    }
+
+    // ไอคอนเส้น (SVG) ใช้ซ้ำทั้งหน้า: ใส่ data-icon="ชื่อ" ใน HTML หรือเรียก icon('ชื่อ') ใน JS
+    const ICONS = {
+      utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2"/><path d="M6 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
+      calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+      clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+      user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+      pencil: '<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+      list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+      search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+      cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 2h3l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>',
+      check: '<path d="M20 6 9 17l-5-5"/>',
+      'check-circle': '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+      'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+      door: '<path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01M13 4.6v16.8a1 1 0 0 1-1.2 1L5 20V5.6a2 2 0 0 1 1.6-2l5-1A1 1 0 0 1 13 3.6z"/>',
+      info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+      hourglass: '<path d="M5 22h14M5 2h14M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"/>',
+    };
+    function icon(name) {
+      const span = el('span', { className: 'icon-wrap' });
+      span.style.display = 'contents';
+      span.innerHTML = `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+      return span;
+    }
+    document.querySelectorAll('[data-icon]').forEach((node) => node.append(icon(node.dataset.icon)));
+
+    // อีโมจิประจำหมวด
+    const CATEGORY_EMOJI = {
+      'ทั้งหมด': '🍽️', 'เมนูขายดี': '👑', 'ยำ ลาบ ส้มตำ': '🥗', 'ผัดผัก': '🥬', 'ต้มยำ แกง': '🍲',
+      'ข้าว เส้น': '🍚', 'อบ นึ่ง เผา': '🔥', 'ผัด ทอด กับแกล้ม': '🍤', 'เครื่องดื่ม': '🥤', 'เบียร์ สุรา': '🍺',
+    };
+
+
+    // ===== 2. การจอง (งานนัดกินข้าว) =====
+    const SESSIONS = { 'เช้า': 'รอบเช้า 11:00–17:00', 'เย็น': 'รอบเย็น 18:00–24:00' };
+    const bookingSelect = document.getElementById('booking-select');
+    const bookingCard = document.getElementById('booking-card');
+    const bookingForm = document.getElementById('booking-form');
+    const orderArea = document.getElementById('order-area');
+    const noBookingEl = document.getElementById('no-booking');
+    const f = (id) => document.getElementById(id);
+
+    let bookings = [];
+    let currentBookingId = null;
+    let editingId = null;          // null = กำลังจองใหม่, มีค่า = กำลังแก้การจองนั้น
+
+    const todayStr = () => new Date().toLocaleDateString('sv-SE');   // YYYY-MM-DD ตามเวลาเครื่อง
+    const hhmm = (t) => (t ? t.slice(0, 5) : '');
+    const thaiDate = (d) => new Date(d + 'T00:00:00')
+      .toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' });
+    const currentBooking = () => bookings.find((b) => b.id === currentBookingId) || null;
+
+    function rememberBooking(id) {
+      currentBookingId = id;
+      try { localStorage.setItem('kungten_booking', id || ''); } catch (e) {}
+    }
+
+    // ถ้ายังไม่เคยเลือก ให้เปิดงานที่ใกล้ที่สุดที่ยังไม่ผ่านไป
+    function pickDefaultBooking() {
+      let saved = null;
+      try { saved = localStorage.getItem('kungten_booking'); } catch (e) {}
+      if (bookings.some((b) => b.id === saved)) return saved;
+      const upcoming = bookings.find((b) => b.booking_date >= todayStr());
+      return (upcoming || bookings[bookings.length - 1] || {}).id || null;
+    }
+
+    async function loadBookings() {
+      const { data, error } = await db.from('bookings').select('*');
+      if (error) { showStatus('โหลดการจองไม่ได้: ' + error.message, true); return; }
+      bookings = data.sort((a, b) => a.booking_date.localeCompare(b.booking_date)
+        || (a.session === b.session ? 0 : a.session === 'เช้า' ? -1 : 1));
+      if (!currentBooking()) currentBookingId = pickDefaultBooking();
+      renderBookings();
+    }
+
+    function renderBookings() {
+      const today = todayStr();
+      bookingSelect.replaceChildren(...bookings.map((b) => el('option', {
+        value: b.id,
+        textContent: [thaiDate(b.booking_date), b.title || 'ไม่มีหัวข้อ', b.room].filter(Boolean).join(' · ')
+          + (b.booking_date < today ? ' (ผ่านไปแล้ว)' : ''),
+      })));
+      bookingSelect.value = currentBookingId || '';
+      bookingSelect.disabled = bookings.length === 0;
+      noBookingEl.hidden = true;
+      orderArea.hidden = !currentBooking();
+      f('cart-bar').hidden = !currentBooking();
+
+      // ตัวเลือกห้อง/หัวข้อที่เคยใช้ จะขึ้นให้เลือกตอนพิมพ์
+      const unique = (key) => [...new Set(bookings.map((b) => b[key]).filter(Boolean))];
+      f('room-options').replaceChildren(...unique('room').map((v) => el('option', { value: v })));
+      f('title-options').replaceChildren(...unique('title').map((v) => el('option', { value: v })));
+
+      renderBookingCard();
+    }
+
+    function renderBookingCard() {
+      const b = currentBooking();
+      f('bk-session').hidden = !b;
+      bookingCard.hidden = !b;
+      const titleEl = f('bk-title');
+      if (!b) {
+        f('bk-date').textContent = 'ยังไม่มีการจอง';
+        titleEl.textContent = 'กด "+ จองใหม่" เพื่อเริ่ม';
+        titleEl.className = '';
+        bookingCard.replaceChildren();
+        return;
+      }
+      f('bk-date').textContent = thaiDate(b.booking_date);
+      titleEl.textContent = b.title || 'ไม่มีหัวข้อ';
+      titleEl.className = b.title ? 'has-title' : '';
+
+      const [sessionName, sessionTime] = SESSIONS[b.session].split(' ');
+      f('bk-session-name').textContent = sessionName;
+      f('bk-session-time').textContent = sessionTime;
+      f('bk-actual').textContent = b.start_time ? `(จองจริง ${hhmm(b.start_time)}–${hhmm(b.end_time) || '?'} น.)` : '';
+
+      const detail = (iconName, tone, label, value, extraClass = '') => el('div', { className: 'detail ' + extraClass },
+        el('span', { className: 'ico ' + tone }, icon(iconName)),
+        el('span', {}, ...(label ? [el('small', { textContent: label })] : []), el('b', { textContent: value })));
+      const details = [];
+      if (b.room) details.push(detail('door', 'orange', '', b.room));
+      if (b.booked_by) details.push(detail('user', 'green', 'จองในนาม', b.booked_by));
+      if (b.deposit_paid || b.deposit_amount != null) {
+        const amount = b.deposit_amount != null ? baht(b.deposit_amount) : '';
+        details.push(b.deposit_paid
+          ? detail('check-circle', 'green', amount ? 'มัดจำ ' + amount : '', 'จ่ายมัดจำแล้ว', 'paid')
+          : detail('hourglass', 'orange', amount ? 'มัดจำ ' + amount : '', 'ยังไม่จ่ายมัดจำ', 'unpaid'));
+      }
+      const edit = el('button', { type: 'button', className: 'edit-link' }, icon('info'), 'แก้ไขการจอง', icon('chevron-right'));
+      edit.addEventListener('click', () => openBookingForm(b));
+      bookingCard.replaceChildren(...(details.length ? [el('div', { className: 'details' }, ...details)] : []), edit);
+    }
+
+    function openBookingForm(b = null) {
+      editingId = b ? b.id : null;
+      f('booking-form-title').textContent = b ? 'แก้ไขการจอง' : 'จองใหม่';
+      f('b-title').value = b?.title || '';
+      f('b-date').value = b?.booking_date || todayStr();
+      f('b-session').value = b?.session || 'เย็น';
+      f('b-start').value = hhmm(b?.start_time);
+      f('b-end').value = hhmm(b?.end_time);
+      f('b-room').value = b?.room || '';
+      f('b-by').value = b?.booked_by || '';
+      f('b-deposit').value = b?.deposit_amount ?? '';
+      f('b-paid').checked = !!b?.deposit_paid;
+      f('b-delete').hidden = !b;
+      bookingForm.hidden = false;
+      f('b-title').focus();
+    }
+
+    function closeBookingForm() {
+      bookingForm.hidden = true;
+    }
+
+    f('new-booking-btn').addEventListener('click', () => openBookingForm());
+    f('b-cancel').addEventListener('click', closeBookingForm);
+
+    bookingForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const text = (id) => f(id).value.trim() || null;
+      const deposit = f('b-deposit').value.trim();
+      const row = {
+        title: text('b-title'),
+        booking_date: f('b-date').value,
+        session: f('b-session').value,
+        start_time: f('b-start').value || null,
+        end_time: f('b-end').value || null,
+        room: text('b-room'),
+        booked_by: text('b-by'),
+        deposit_paid: f('b-paid').checked,
+        deposit_amount: deposit === '' ? null : Math.max(0, Math.round(Number(deposit))),
+      };
+      f('b-save').disabled = true;
+      let id = editingId;
+      let result;
+      if (id) {
+        result = await db.from('bookings').update(row).eq('id', id);
+      } else {
+        id = crypto.randomUUID();
+        result = await db.from('bookings').insert({ id, ...row });
+      }
+      f('b-save').disabled = false;
+      if (result.error) { showStatus('บันทึกการจองไม่สำเร็จ: ' + result.error.message, true); return; }
+      showStatus(editingId ? 'แก้ไขการจองแล้ว' : 'จองแล้ว เลือกเมนูได้เลย');
+      rememberBooking(id);
+      closeBookingForm();
+      await loadBookings();
+      await loadOrders();
+    });
+
+    f('b-delete').addEventListener('click', async () => {
+      if (!editingId) return;
+      if (!confirm('ลบการจองนี้ และรายการอาหารที่สั่งไว้ในงานนี้ทั้งหมด? (ย้อนกลับไม่ได้)')) return;
+      const { error } = await db.from('bookings').delete().eq('id', editingId);
+      if (error) { showStatus('ลบไม่สำเร็จ: ' + error.message, true); return; }
+      showStatus('ลบการจองแล้ว');
+      rememberBooking(null);
+      closeBookingForm();
+      await loadBookings();
+      await loadOrders();
+    });
+
+    bookingSelect.addEventListener('change', async () => {
+      rememberBooking(bookingSelect.value);
+      renderBookings();
+      await loadOrders();
+    });
+
+    // ===== 3. ชื่อผู้สั่ง: จำไว้ในเครื่อง ไม่ต้องพิมพ์ใหม่ทุกครั้ง =====
+    try { nameInput.value = localStorage.getItem('kungten_order_name') || ''; } catch (e) {}
+    nameInput.addEventListener('input', () => {
+      f('name-card').classList.remove('missing');
+      try { localStorage.setItem('kungten_order_name', nameInput.value.trim()); } catch (e) {}
+      if (orderView === 'person') renderOrders();
+    });
+    const myName = () => nameInput.value.trim();
+
+    // ===== 4. แท็บ =====
+    function showTab(tab) {
+      document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+      document.getElementById('menu-view').hidden = tab !== 'menu';
+      document.getElementById('orders-view').hidden = tab !== 'orders';
+    }
+    document.querySelectorAll('.tabs button').forEach((btn) => {
+      btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    });
+    f('cart-btn').addEventListener('click', () => {
+      showTab('orders');
+      f('tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.querySelectorAll('.view-toggle button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        orderView = btn.dataset.view;
+        document.querySelectorAll('.view-toggle button').forEach((b) => b.classList.toggle('active', b === btn));
+        renderOrders();
+      });
+    });
+
+    // ===== 5. เมนู =====
+    async function loadMenu() {
+      const { data, error } = await db
+        .from('menu_items')
+        .select('*')
+        .eq('available', true)
+        .order('sort_order');
+      if (error) {
+        menuListEl.replaceChildren(el('p', { className: 'empty', textContent: 'โหลดเมนูไม่ได้: ' + error.message }));
+        return false;
+      }
+      menuItems = data;
+      menuById = new Map(data.map((m) => [m.id, m]));
+      renderChips();
+      renderMenu();
+      return true;
+    }
+
+    function categories() {
+      return ['ทั้งหมด', ...new Set(menuItems.map((m) => m.category))];
+    }
+
+    function renderChips() {
+      chipsEl.replaceChildren(...categories().map((cat) => {
+        const b = el('button', { type: 'button', className: cat === activeCategory ? 'active' : '' },
+          el('span', { textContent: CATEGORY_EMOJI[cat] || '🍽️' }), cat);
+        b.addEventListener('click', () => { activeCategory = cat; renderChips(); renderMenu(); });
+        return b;
+      }));
+    }
+
+    function renderMenu() {
+      const q = searchInput.value.trim().toLowerCase();
+      // รวมแถวที่ชื่อเดียวกันในหมวดเดียวกันเป็น 1 เมนู (เช่น ข้าวผัด เล็ก/กลาง/ใหญ่)
+      const groups = new Map();
+      for (const item of menuItems) {
+        if (activeCategory !== 'ทั้งหมด' && item.category !== activeCategory) continue;
+        if (q && !item.name.toLowerCase().includes(q)) continue;
+        // ตอนค้นหาในหมวด "ทั้งหมด" ไม่ต้องโชว์เมนูขายดีซ้ำ
+        if (q && activeCategory === 'ทั้งหมด' && item.category === 'เมนูขายดี'
+            && menuItems.some((m) => m.category !== 'เมนูขายดี' && m.name === item.name)) continue;
+        const key = item.category + '|' + item.name;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      }
+
+      const nodes = [];
+      let lastCat = null;
+      for (const options of groups.values()) {
+        const cat = options[0].category;
+        if (cat !== lastCat) {
+          nodes.push(el('div', { className: 'cat-head' },
+            el('h2', {}, el('span', { textContent: cat === 'เมนูขายดี' ? '🦐' : (CATEGORY_EMOJI[cat] || '🍽️') }), cat)));
+          lastCat = cat;
+        }
+        nodes.push(dishRow(options));
+      }
+      if (nodes.length === 0) nodes.push(el('p', { className: 'empty', textContent: 'ไม่พบเมนู' }));
+      menuListEl.replaceChildren(...nodes);
+    }
+
+    function dishRow(options) {
+      const first = options[0];
+      const priceEl = el('div', { className: 'price' });
+      let select = null;
+      if (options.length > 1) {
+        select = el('select', {}, ...options.map((o) =>
+          el('option', { value: o.id, textContent: `${o.option_label} ${o.price}` })));
+        priceEl.textContent = options.map((o) => o.price).join(' / ') + ' บาท';
+      } else {
+        priceEl.textContent = priceText(first) + (first.unit === 'ขีด' ? ' (จำนวน = กี่ขีด)' : '');
+      }
+
+      let qty = 1;
+      const qtyEl = el('span', { textContent: '1' });
+      const minus = el('button', { type: 'button', textContent: '−', ariaLabel: 'ลด' });
+      const plus = el('button', { type: 'button', textContent: '+', ariaLabel: 'เพิ่ม' });
+      minus.addEventListener('click', () => { qty = Math.max(1, qty - 1); qtyEl.textContent = qty; });
+      plus.addEventListener('click', () => { qty = Math.min(99, qty + 1); qtyEl.textContent = qty; });
+
+      const orderBtn = el('button', { type: 'button', className: 'order-btn' }, icon('cart'), 'สั่ง');
+      orderBtn.addEventListener('click', async () => {
+        const itemId = select ? Number(select.value) : first.id;
+        orderBtn.disabled = true;
+        const ok = await addOrder(itemId, qty);
+        orderBtn.disabled = false;
+        if (ok) { qty = 1; qtyEl.textContent = '1'; }
+      });
+
+      return el('div', { className: 'dish' },
+        el('div', { className: 'info' }, el('div', { className: 'dname', textContent: first.name }), priceEl),
+        el('div', { className: 'controls' }, ...(select ? [select] : []),
+          el('div', { className: 'stepper' }, minus, qtyEl, plus), orderBtn));
+    }
+
+    searchInput.addEventListener('input', renderMenu);
+
+    // ===== 6. สั่ง / ลบ =====
+    async function addOrder(menuItemId, quantity) {
+      const name = myName();
+      if (!name) {
+        f('name-card').classList.add('missing');
+        nameInput.focus();
+        showStatus('ใส่ชื่อของคุณก่อนนะ', true);
+        return false;
+      }
+      if (!currentBookingId) { showStatus('เลือกงานก่อนนะ', true); return false; }
+      const { error } = await db.from('orders').insert({
+        booking_id: currentBookingId, person_name: name, menu_item_id: menuItemId, quantity,
+      });
+      if (error) { showStatus('สั่งไม่สำเร็จ: ' + error.message, true); return false; }
+      showStatus(`สั่ง ${itemLabel(menuById.get(menuItemId))} × ${quantity} แล้ว`);
+      await loadOrders();
+      return true;
+    }
+
+    async function deleteOrder(id) {
+      const { error } = await db.from('orders').delete().eq('id', id);
+      if (error) { showStatus('ลบไม่สำเร็จ: ' + error.message, true); return; }
+      await loadOrders();
+    }
+
+    // ===== 7. รายการสั่งรวม =====
+    async function loadOrders() {
+      const bookingId = currentBookingId;
+      if (!bookingId) { orders = []; renderOrders(); return; }
+      const { data, error } = await db.from('orders').select('*').eq('booking_id', bookingId).order('created_at');
+      if (error) { showStatus('โหลดรายการสั่งไม่ได้: ' + error.message, true); return; }
+      if (bookingId !== currentBookingId) return;   // ระหว่างโหลดมีคนสลับไปงานอื่นแล้ว
+      orders = data.filter((o) => menuById.has(o.menu_item_id));
+      renderOrders();
+    }
+
+    function lineAmount(order) {
+      const item = menuById.get(order.menu_item_id);
+      return item.price == null ? null : item.price * order.quantity;
+    }
+
+    function renderOrders() {
+      orderCountEl.textContent = orders.reduce((sum, o) => sum + o.quantity, 0);
+      let total = 0;
+      let unpriced = 0;
+      for (const o of orders) {
+        const amount = lineAmount(o);
+        if (amount == null) unpriced++; else total += amount;
+      }
+      grandTotalEl.textContent = baht(total);
+      f('cart-count').textContent = orderCountEl.textContent;
+      f('cart-total').textContent = 'ยอดประมาณ ' + baht(total);
+      const hasByWeight = orders.some((o) => ['ขีด', 'กิโล'].includes(menuById.get(o.menu_item_id).unit));
+      const hints = [];
+      if (unpriced) hints.push('มีเมนูที่ต้องสอบถามราคา ยังไม่รวมในยอดนี้');
+      if (hasByWeight) hints.push('เมนูชั่งน้ำหนักเป็นราคาประมาณ ร้านจะคิดตามน้ำหนักจริง');
+      totalHintEl.textContent = hints.join(' · ');
+      totalHintEl.hidden = hints.length === 0;
+
+      if (orders.length === 0) {
+        ordersListEl.replaceChildren(el('p', { className: 'empty', textContent: 'ยังไม่มีใครสั่ง' }));
+        return;
+      }
+      ordersListEl.replaceChildren(orderView === 'dish' ? renderByDish() : renderByPerson());
+    }
+
+    // รวมตามเมนู: เมนูเดียวกัน (ชื่อ + ขนาด) รวมจำนวนจากทุกคน
+    function renderByDish() {
+      const groups = new Map();
+      for (const o of orders) {
+        const item = menuById.get(o.menu_item_id);
+        const key = itemLabel(item) + '|' + item.price;
+        if (!groups.has(key)) groups.set(key, { item, qty: 0, people: new Map() });
+        const g = groups.get(key);
+        g.qty += o.quantity;
+        g.people.set(o.person_name, (g.people.get(o.person_name) || 0) + o.quantity);
+      }
+      return el('ul', {}, ...[...groups.values()].map((g) => {
+        const who = [...g.people].map(([n, q]) => q > 1 ? `${n} ×${q}` : n).join(', ');
+        const amount = g.item.price == null ? 'สอบถามราคา' : (g.item.price * g.qty).toLocaleString('th-TH');
+        return el('li', { className: 'line' },
+          el('span', { className: 'qty', textContent: '×' + g.qty + (['ขีด', 'กิโล'].includes(g.item.unit) ? ' ' + g.item.unit : '') }),
+          el('span', { className: 'what', textContent: itemLabel(g.item) }, el('span', { className: 'who', textContent: who })),
+          el('span', { className: 'amount', textContent: amount }));
+      }));
+    }
+
+    // แยกตามคน: เห็นยอดของแต่ละคน และลบรายการของตัวเองได้
+    function renderByPerson() {
+      const people = new Map();
+      for (const o of orders) {
+        if (!people.has(o.person_name)) people.set(o.person_name, []);
+        people.get(o.person_name).push(o);
+      }
+      const me = myName();
+      return el('div', {}, ...[...people].map(([name, list]) => {
+        const subtotal = list.reduce((s, o) => s + (lineAmount(o) || 0), 0);
+        const isMe = name === me;
+        return el('div', { className: 'person' + (isMe ? ' me' : '') },
+          el('h3', {}, el('span', { textContent: name + (isMe ? ' (คุณ)' : '') }), el('span', { textContent: baht(subtotal) })),
+          el('ul', {}, ...list.map((o) => {
+            const item = menuById.get(o.menu_item_id);
+            const amount = lineAmount(o);
+            const li = el('li', { className: 'line' },
+              el('span', { className: 'qty', textContent: '×' + o.quantity }),
+              el('span', { className: 'what', textContent: itemLabel(item) }),
+              el('span', { className: 'amount', textContent: amount == null ? 'สอบถามราคา' : amount.toLocaleString('th-TH') }));
+            if (isMe) {
+              const del = el('button', { type: 'button', className: 'delete', textContent: '✕', title: 'ลบรายการนี้' });
+              del.addEventListener('click', () => deleteOrder(o.id));
+              li.append(del);
+            }
+            return li;
+          })));
+      }));
+    }
+
+    // ===== 8. Realtime: มีคนจอง/สั่ง/ลบเมื่อไหร่ ทุกเครื่องโหลดข้อมูลใหม่ทันที =====
+    function subscribeOrders() {
+      db.channel('kungten-order')
+        .on('postgres_changes', { event: '*', schema: 'kungten_order', table: 'orders' }, () => loadOrders())
+        .on('postgres_changes', { event: '*', schema: 'kungten_order', table: 'bookings' }, async () => {
+          const before = currentBookingId;
+          await loadBookings();
+          if (currentBookingId !== before) await loadOrders();
+        })
+        .subscribe((status) => {
+          const on = status === 'SUBSCRIBED';
+          liveEl.textContent = on ? 'อัปเดตสด' : 'ออฟไลน์';
+          liveEl.classList.toggle('on', on);
+          // ต่อกลับมาได้หลังหลุด: โหลดใหม่เผื่อพลาดอะไรไประหว่างนั้น
+          if (on) loadBookings().then(loadOrders);
+        });
+    }
+
+    (async function start() {
+      if (SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
+        noBookingEl.textContent = 'ยังไม่ได้ใส่ SUPABASE_URL และ SUPABASE_KEY ในไฟล์ index.html';
+        noBookingEl.hidden = false;
+        return;
+      }
+      if (await loadMenu()) {
+        await loadBookings();
+        await loadOrders();
+        subscribeOrders();
+      }
+    })();
+  </script>
+</body>
+</html>
