@@ -156,7 +156,10 @@
     .line .what { flex: 1; word-break: break-word; }
     .line .who { display: block; font-size: 13px; color: var(--muted); }
     .line .amount { flex: none; font-size: 15px; }
-    .delete { background: transparent; color: #dc2626; padding: 2px 8px; }
+    .delete { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin: -6px 0; padding: 0; border-radius: 10px; background: #fee2e2; color: #dc2626; }
+    .delete .i { width: 18px; height: 18px; }
+    .view-hint { margin: 4px 0 8px; font-size: 13px; color: var(--muted); }
+    .view-hint button { padding: 0; background: none; color: var(--orange-dark); font: inherit; font-weight: 600; text-decoration: underline; }
     .person { margin-top: 12px; }
     .person h3 { display: flex; justify-content: space-between; font-size: 15px; margin: 0; padding: 8px 12px; background: var(--orange-soft); border-radius: 12px; }
     .person.me h3 { background: #ffe2c7; }
@@ -363,6 +366,7 @@
       'chevron-right': '<path d="m9 18 6-6-6-6"/>',
       door: '<path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01M13 4.6v16.8a1 1 0 0 1-1.2 1L5 20V5.6a2 2 0 0 1 1.6-2l5-1A1 1 0 0 1 13 3.6z"/>',
       info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+      trash: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>',
       hourglass: '<path d="M5 22h14M5 2h14M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"/>',
     };
     function icon(name) {
@@ -709,9 +713,14 @@
       return true;
     }
 
-    async function deleteOrder(id) {
+    async function deleteOrder(order) {
+      const what = `${itemLabel(menuById.get(order.menu_item_id))} × ${order.quantity}`;
+      const whose = order.person_name === myName() ? '' : ` ของ ${order.person_name}`;
+      if (!confirm(`ลบ ${what}${whose} ?`)) return;
+      const id = order.id;
       const { error } = await db.from('orders').delete().eq('id', id);
       if (error) { showStatus('ลบไม่สำเร็จ: ' + error.message, true); return; }
+      showStatus(`ลบ ${what}${whose} แล้ว`);
       await loadOrders();
     }
 
@@ -767,17 +776,20 @@
         g.qty += o.quantity;
         g.people.set(o.person_name, (g.people.get(o.person_name) || 0) + o.quantity);
       }
-      return el('ul', {}, ...[...groups.values()].map((g) => {
+      const toPerson = el('button', { type: 'button', textContent: 'แยกตามคน' });
+      toPerson.addEventListener('click', () => document.querySelector('[data-view="person"]').click());
+      const hint = el('p', { className: 'view-hint' }, 'ต้องการลบรายการ? ไปที่ ', toPerson);
+      return el('div', {}, hint, el('ul', {}, ...[...groups.values()].map((g) => {
         const who = [...g.people].map(([n, q]) => q > 1 ? `${n} ×${q}` : n).join(', ');
         const amount = g.item.price == null ? 'สอบถามราคา' : (g.item.price * g.qty).toLocaleString('th-TH');
         return el('li', { className: 'line' },
           el('span', { className: 'qty', textContent: '×' + g.qty + (['ขีด', 'กิโล'].includes(g.item.unit) ? ' ' + g.item.unit : '') }),
           el('span', { className: 'what', textContent: itemLabel(g.item) }, el('span', { className: 'who', textContent: who })),
           el('span', { className: 'amount', textContent: amount }));
-      }));
+      })));
     }
 
-    // แยกตามคน: เห็นยอดของแต่ละคน และลบรายการของตัวเองได้
+    // แยกตามคน: เห็นยอดของแต่ละคน และลบรายการไหนก็ได้ (มีถามยืนยันก่อน)
     function renderByPerson() {
       const people = new Map();
       for (const o of orders) {
@@ -797,11 +809,9 @@
               el('span', { className: 'qty', textContent: '×' + o.quantity }),
               el('span', { className: 'what', textContent: itemLabel(item) }),
               el('span', { className: 'amount', textContent: amount == null ? 'สอบถามราคา' : amount.toLocaleString('th-TH') }));
-            if (isMe) {
-              const del = el('button', { type: 'button', className: 'delete', textContent: '✕', title: 'ลบรายการนี้' });
-              del.addEventListener('click', () => deleteOrder(o.id));
-              li.append(del);
-            }
+            const del = el('button', { type: 'button', className: 'delete', title: 'ลบรายการนี้', ariaLabel: 'ลบรายการนี้' }, icon('trash'));
+            del.addEventListener('click', () => deleteOrder(o));
+            li.append(del);
             return li;
           })));
       }));
