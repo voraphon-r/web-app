@@ -57,6 +57,11 @@
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
 
     /* การจอง */
+    .headline { display: block; width: 100%; text-align: left; background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; font-family: "Prompt", sans-serif; box-shadow: 0 6px 16px rgba(234,88,12,0.25); }
+    .headline small { display: block; font-size: 13px; font-weight: 500; opacity: 0.85; }
+    .headline b { display: block; font-size: 24px; font-weight: 700; line-height: 1.25; word-break: break-word; }
+    .headline.empty { background: #fff7ed; color: var(--orange-dark); border: 2px dashed #fdba74; box-shadow: none; }
+    .headline.empty b { font-size: 18px; }
     .booking-top { display: flex; gap: 10px; align-items: stretch; }
     .pill { position: relative; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 6px; min-width: 0; }
     .pill-select { flex: 1; cursor: pointer; }
@@ -193,6 +198,7 @@
 
     <!-- ส่วนการจอง: เลือกงานที่จะสั่งอาหาร หรือจองใหม่ -->
     <section class="panel booking">
+      <button type="button" class="headline" id="bk-headline" hidden></button>
       <div class="booking-top">
         <label class="pill pill-select" id="booking-pill">
           <span class="ico green" data-icon="calendar"></span>
@@ -440,6 +446,8 @@
     function renderBookingCard() {
       const b = currentBooking();
       f('bk-session').hidden = !b;
+      const headline = f('bk-headline');
+      headline.hidden = !b;
       bookingCard.hidden = !b;
       const titleEl = f('bk-title');
       if (!b) {
@@ -450,8 +458,13 @@
         return;
       }
       f('bk-date').textContent = thaiDate(b.booking_date);
-      titleEl.textContent = b.title || 'ไม่มีหัวข้อ';
-      titleEl.className = b.title ? 'has-title' : '';
+      titleEl.textContent = [b.room, b.booked_by].filter(Boolean).join(' · ') || 'แตะเพื่อเลือกงานอื่น';
+      titleEl.className = '';
+      headline.className = 'headline' + (b.title ? '' : ' empty');
+      headline.replaceChildren(
+        el('small', { textContent: b.title ? 'หัวข้องาน' : 'ยังไม่ได้ตั้งหัวข้องาน' }),
+        el('b', { textContent: b.title || '+ แตะเพื่อตั้งหัวข้องาน' }));
+      headline.onclick = () => openBookingForm(b);
 
       const [sessionName, sessionTime] = SESSIONS[b.session].split(' ');
       f('bk-session-name').textContent = sessionName;
