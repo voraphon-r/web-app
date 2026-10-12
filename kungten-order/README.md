@@ -12,7 +12,7 @@
 1. Supabase: สร้างโปรเจกต์ `voraphon-apps` (ถ้ายังไม่มี)
 2. SQL Editor > วางเนื้อหา `supabase/setup.sql` > Run
 3. Project Settings > Data API > Exposed schemas > เพิ่ม `kungten_order` > Save
-4. Project Settings > API Keys > คัดลอก Project URL และ Publishable key ไปใส่ `SUPABASE_URL` / `SUPABASE_KEY` ใน `public/index.html`
+4. ใส่ Project URL และ Publishable key ใน `public/index.html` แล้ว (โปรเจกต์ voraphon-apps)
 5. Deploy: ลากโฟลเดอร์ `public/` ไปวางใน Netlify (Add new project > Deploy manually)
 
 ## หมายเหตุเมนู

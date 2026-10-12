@@ -289,8 +289,8 @@
     // ===== 1. เชื่อมต่อกับโปรเจกต์ Supabase ที่ใช้ร่วมกันหลายแอป =====
     // ใส่ Project URL และ Publishable key ของโปรเจกต์ voraphon-apps
     // (Supabase > Project Settings > API Keys) ค่าพวกนี้เปิดเผยในหน้าเว็บได้
-    const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
-    const SUPABASE_KEY = 'YOUR-PUBLISHABLE-KEY';
+    const SUPABASE_URL = 'https://qfxqjpqpytkaymlyjuuz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_7A3d5nMlhvAu6vLB2VvG3A_uyKserby';
     // แอปนี้ใช้ตารางใน schema "kungten_order" เท่านั้น ไม่ยุ่งกับแอปอื่นในโปรเจกต์เดียวกัน
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'kungten_order' } });
 
