@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- No network access after load: images stay on this device. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<title>Tier List</title>
+<meta name="description" content="ทำ tier list จัดอันดับด้วยรูปของคุณเอง ทำงานในเบราว์เซอร์ล้วน ๆ รูปไม่ถูกอัปโหลดไปไหน">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2318181b'/%3E%3Crect x='4' y='5' width='7' height='6' rx='1' fill='%23f87171'/%3E%3Crect x='4' y='13' width='7' height='6' rx='1' fill='%23facc15'/%3E%3Crect x='4' y='21' width='7' height='6' rx='1' fill='%234ade80'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1' fill='%23e4e4e7'/%3E%3Crect x='21' y='5' width='6' height='6' rx='1' fill='%23e4e4e7'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1' fill='%23e4e4e7'/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --text: #18181b;
+  --muted: #71717a;
+  --border: #d4d4d8;
+  --accent: #4f46e5;
+  --accent-soft: rgba(79, 70, 229, .12);
+  --danger: #dc2626;
+  --sheet-default: #fafafa;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .18);
+  --ih: 80px;   /* item height */
+  --lw: 100px;  /* tier label width */
+  --cw: 40px;   /* tier controls width */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f0f11;
+    --surface: #1c1c20;
+    --surface-2: #26262b;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --border: #3f3f46;
+    --accent: #818cf8;
+    --accent-soft: rgba(129, 140, 248, .16);
+    --danger: #f87171;
+    --sheet-default: #1c1c1f;
+    --shadow: 0 8px 30px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f0f11;
+  --surface: #1c1c20;
+  --surface-2: #26262b;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: #3f3f46;
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, .16);
+  --danger: #f87171;
+  --sheet-default: #1c1c1f;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .5);
+}
+@media (max-width: 640px) {
+  :root { --ih: 60px; --lw: 72px; --cw: 34px; }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input { font: inherit; color: inherit; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.brand { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.brand-mark { display: inline-grid; grid-template-columns: repeat(2, 7px); gap: 2px; }
+.brand-mark i { width: 7px; height: 5px; border-radius: 1px; display: block; }
+.spacer { flex: 1; }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; border-color: var(--border); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--danger); }
+.btn.small { min-height: 30px; padding: 3px 10px; font-size: 14px; }
+.btn.icon { padding: 6px 10px; }
+.btn:focus-visible, .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* sheet = title + tiers, the part that gets exported */
+.sheet {
+  background: var(--sheet-bg);
+  color: var(--sheet-fg);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+.title {
+  font-size: clamp(20px, 4vw, 30px); font-weight: 700; line-height: 1.25;
+  margin: 0 0 10px; padding: 2px 6px; border-radius: 6px;
+  outline: none; min-height: 1.3em; overflow-wrap: anywhere; cursor: text;
+}
+.title:empty::before { content: attr(data-ph); opacity: .4; }
+.title:focus { box-shadow: 0 0 0 2px var(--accent); }
+.board { display: flex; flex-direction: column; gap: 2px; background: var(--sheet-sep); border: 2px solid var(--sheet-sep); }
+.board:empty { display: none; }
+.row { display: flex; background: var(--sheet-bg); }
+.label { flex: 0 0 var(--lw); position: relative; cursor: text; }
+.label-fit {
+  position: absolute; inset: 4px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.label-text {
+  display: block; max-width: 100%; min-width: 1ch; min-height: 1em;
+  text-align: center; font-weight: 700; line-height: 1.15;
+  overflow-wrap: anywhere; outline: none; white-space: pre-wrap;
+}
+.label:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+.items {
+  flex: 1; min-width: 0; min-height: calc(var(--ih) + 4px);
+  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px; padding: 2px;
+}
+.ctrl {
+  flex: 0 0 var(--cw); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; background: var(--sheet-ctrl);
+}
+.ctrl button {
+  width: 32px; height: 30px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--sheet-fg); cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.ctrl button:hover { background: rgba(127, 127, 127, .2); }
+.ctrl .handle { cursor: grab; touch-action: none; }
+.ctrl svg { width: 18px; height: 18px; }
+
+/* items */
+.item {
+  position: relative; flex: 0 0 auto;
+  height: var(--ih); width: calc(var(--ih) * var(--r, 1));
+  overflow: hidden; border-radius: 3px; background: rgba(127, 127, 127, .2);
+  cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.crop-circle .item, .crop-circle .placeholder { border-radius: 50%; }
+.cap {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 3px;
+  background: rgba(0, 0, 0, .62); color: #fff; font-size: calc(var(--ih) * .14); line-height: 1.15;
+  text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.crop-circle .cap { padding-bottom: 8%; }
+.item.lift { transform: scale(1.08); box-shadow: var(--shadow); transition: transform .12s; }
+.drag-src { display: none !important; }
+.placeholder {
+  flex: 0 0 auto; height: var(--ih); width: calc(var(--ih) * var(--r, 1));
+  border-radius: 3px; background: var(--accent-soft); outline: 2px dashed var(--accent); outline-offset: -2px;
+}
+.row-placeholder { background: var(--accent-soft); outline: 2px dashed var(--accent); outline-offset: -2px; }
+.ghost {
+  position: fixed !important; left: 0; top: 0; z-index: 1000; margin: 0;
+  pointer-events: none; box-shadow: var(--shadow); opacity: .92;
+}
+body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; -webkit-user-select: none; }
+
+.add-row { margin-top: 10px; }
+
+/* image pool */
+.pool-wrap { margin-top: 20px; }
+.pool-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; font-weight: 600; }
+.pool-head .muted { font-weight: 400; }
+.pool-box { position: relative; }
+.pool {
+  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+  min-height: calc(var(--ih) + 20px); padding: 8px;
+  background: var(--surface); border: 2px dashed var(--border); border-radius: 10px;
+}
+.pool-hint {
+  position: absolute; inset: 0; display: grid; place-items: center; padding: 8px 16px;
+  color: var(--muted); text-align: center; pointer-events: none; font-size: 15px;
+}
+body.file-over .pool { border-color: var(--accent); background: var(--accent-soft); }
+.muted { color: var(--muted); }
+
+/* toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.toolbar + .toolbar { margin-top: 8px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.color-field { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; }
+.color-field input[type="color"] { width: 34px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
+.status { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 1.2em; }
+
+/* popup menu */
+.menu {
+  position: absolute; z-index: 900; min-width: 220px; max-width: calc(100vw - 16px);
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow); padding: 6px;
+}
+.menu > button {
+  display: flex; width: 100%; align-items: center; gap: 8px; text-align: left;
+  border: 0; background: transparent; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+}
+.menu > button:hover, .menu > button:focus-visible { background: var(--surface-2); outline: none; }
+.menu > button.danger { color: var(--danger); }
+.menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+.menu-label { font-size: 12px; color: var(--muted); padding: 4px 10px 2px; }
+.swatches { display: grid; grid-template-columns: repeat(6, 28px); gap: 6px; padding: 6px 10px; align-items: center; }
+.swatch { width: 28px; height: 28px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { border-color: var(--text); }
+.swatches input[type="color"] { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
+.menu-field { display: flex; gap: 6px; padding: 6px 10px; }
+.menu-field input {
+  flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+}
+
+/* dialog + toast */
+dialog {
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text);
+  padding: 20px; max-width: min(420px, calc(100vw - 32px)); box-shadow: var(--shadow);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+dialog h2 { margin: 0 0 6px; font-size: 18px; }
+dialog p { margin: 0 0 16px; color: var(--muted); }
+.dlg-actions { display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1100;
+  background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px;
+  box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s; max-width: calc(100vw - 32px); text-align: center;
+}
+.toast.show { opacity: 1; }
+
+footer { margin-top: 28px; font-size: 13px; color: var(--muted); text-align: center; }
+footer a { color: inherit; }
+
+/* presentation mode */
+.pres-bar {
+  position: fixed; right: 12px; bottom: 12px; z-index: 950; display: none; align-items: center; gap: 10px;
+  background: rgba(0, 0, 0, .55); color: #fff; padding: 6px 6px 6px 14px; border-radius: 999px; font-size: 14px;
+}
+.pres-bar button { border: 0; border-radius: 999px; background: rgba(255, 255, 255, .18); color: #fff; padding: 6px 12px; cursor: pointer; }
+body.presenting { background: var(--sheet-bg); cursor: pointer; --ih: clamp(60px, 11vh, 130px); --lw: calc(var(--ih) * 1.35); }
+body.presenting .top, body.presenting .pool-wrap, body.presenting .toolbar, body.presenting .status,
+body.presenting footer, body.presenting .add-row, body.presenting .ctrl { display: none; }
+body.presenting .wrap { max-width: none; padding: 2vh 3vw; }
+body.presenting .sheet { border: 0; padding: 0; }
+body.presenting .pres-bar { display: flex; }
+body.presenting .label { cursor: pointer; }
+.pres-hidden { display: none !important; }
+.pop { animation: pop .4s cubic-bezier(.2, .9, .3, 1.3); }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i style="background:#f87171"></i><i style="background:#e4e4e7"></i><i style="background:#facc15"></i><i style="background:#e4e4e7"></i><i style="background:#4ade80"></i><i style="background:#e4e4e7"></i></span>
+      Tier List
+    </div>
+    <div class="spacer"></div>
+    <button class="btn icon" id="undoBtn" title="ย้อนกลับ (Ctrl+Z)" aria-label="ย้อนกลับ">↶</button>
+    <button class="btn icon" id="redoBtn" title="ทำซ้ำ (Ctrl+Y)" aria-label="ทำซ้ำ">↷</button>
+    <button class="btn" id="themeBtn" title="สลับธีม"></button>
+  </header>
+
+  <main>
+    <section class="sheet" id="sheet">
+      <h1 class="title" id="title" data-ph="ตั้งชื่อ tier list" spellcheck="false"></h1>
+      <div class="board" id="board"></div>
+    </section>
+    <button class="btn add-row" id="addRowBtn">+ เพิ่มแถว</button>
+
+    <section class="pool-wrap">
+      <div class="pool-head">คลังรูป <span class="muted">(ยังไม่จัดอันดับ)</span> <span class="muted" id="poolCount"></span></div>
+      <div class="pool-box">
+        <div class="pool" id="pool" data-list="pool"></div>
+        <div class="pool-hint" id="poolHint">ลากไฟล์รูปมาวางที่นี่ · กด “อัปโหลดรูป” · หรือวางด้วย Ctrl+V</div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <button class="btn primary" id="uploadBtn">อัปโหลดรูป</button>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      <span class="muted">ครอป:</span>
+      <div class="seg" id="cropSeg" role="group" aria-label="โหมดครอป"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="pngBtn">ดาวน์โหลด PNG</button>
+      <button class="btn" id="presBtn">โหมดนำเสนอ</button>
+      <button class="btn" id="resetBtn">รีเซ็ต</button>
+      <label class="btn color-field" title="สีพื้นหลังของ tier list">สีพื้นหลัง <input type="color" id="bgInput"></label>
+      <button class="btn small" id="bgResetBtn" title="ใช้สีพื้นหลังตามธีม">ค่าเริ่มต้น</button>
+      <button class="btn" id="saveJsonBtn">บันทึก JSON</button>
+      <button class="btn" id="loadJsonBtn">เปิด JSON</button>
+      <input type="file" id="jsonInput" accept=".json,application/json" hidden>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+
+  <footer>
+    Inspired by the Single-Use Tier List on <a href="https://tiermaker.com" target="_blank" rel="noopener noreferrer">TierMaker</a>.
+    This is an independent personal project and is not affiliated with TierMaker.<br>
+    รูปทั้งหมดอยู่ในเครื่องของคุณ ไม่ถูกอัปโหลดไปที่ใด
+  </footer>
+</div>
+
+<div class="pres-bar" id="presBar">
+  <span id="presCount"></span>
+  <span class="muted" style="color:#ddd">คลิก / → ถัดไป · ← ย้อน</span>
+  <button id="presExit">ออก (Esc)</button>
+</div>
+
+<dialog id="resetDlg">
+  <h2>รีเซ็ต</h2>
+  <p>ทำแล้วยังกดย้อนกลับ (Ctrl+Z) ได้</p>
+  <div class="dlg-actions">
+    <button class="btn" data-v="pool">ย้ายรูปทั้งหมดกลับคลัง</button>
+    <button class="btn danger" data-v="all">ล้างทั้งหมด (ลบรูปและแถวกลับค่าเริ่มต้น)</button>
+    <button class="btn" data-v="">ยกเลิก</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+// ---------- helpers ----------
+const $ = (sel) => document.querySelector(sel);
+function h(tag, attrs = {}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'style') el.style.cssText = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) if (c != null) el.append(c);
+  return el;
+}
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const isHex = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
+const hexToRgb = (hex) => { const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const rgbToHex = (r, g, b) => '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+function luminance(hex) {
+  const [r, g, b] = hexToRgb(hex).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+const textOn = (hex) => luminance(hex) > 0.179 ? '#111111' : '#ffffff';
+const mix = (a, b, t) => { const A = hexToRgb(a), B = hexToRgb(b); return rgbToHex(...A.map((v, i) => v + (B[i] - v) * t)); };
+const blurActive = () => { const a = document.activeElement; if (a && a !== document.body && a.blur) a.blur(); };
+const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+
+// Firefox < 136 has no plaintext-only; fall back to normal contenteditable + paste-as-text.
+const EDITABLE = (() => {
+  const d = document.createElement('div');
+  try { d.contentEditable = 'plaintext-only'; } catch (e) { /* unsupported */ }
+  return d.contentEditable === 'plaintext-only' ? 'plaintext-only' : 'true';
+})();
+
+// ---------- state ----------
+const SWATCHES = ['#f87171', '#fb923c', '#facc15', '#a3e635', '#4ade80', '#2dd4bf',
+                  '#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#e4e4e7', '#71717a'];
+const DEFAULT_TIERS = [['S', '#f87171'], ['A', '#fb923c'], ['B', '#facc15'], ['C', '#a3e635'], ['D', '#4ade80']];
+const CROPS = {
+  square:    { label: 'จัตุรัส',       r: 1 },
+  landscape: { label: 'แนวนอน 16:9', r: 16 / 9 },
+  portrait:  { label: 'แนวตั้ง 3:4',   r: 3 / 4 },
+  circle:    { label: 'วงกลม',        r: 1 },
+  none:      { label: 'ไม่ครอป',       r: null },
+};
+const MAX_IMG_SIDE = 300;
+const UNDO_LIMIT = 50;
+
+const defaultState = () => ({
+  v: 1,
+  title: 'Tier list ของฉัน',
+  bg: null,          // null = follow theme
+  crop: 'square',
+  tiers: DEFAULT_TIERS.map(([label, color]) => ({ id: uid(), label, color, items: [] })),
+  pool: [],
+  images: {},        // id -> { src (data URL), w, h, caption }
+});
+let state = defaultState();
+
+// Image data URLs are shared between snapshots, so a snapshot only copies small objects.
+const clone = (s) => ({
+  ...s,
+  tiers: s.tiers.map((t) => ({ ...t, items: [...t.items] })),
+  pool: [...s.pool],
+  images: Object.fromEntries(Object.entries(s.images).map(([k, v]) => [k, { ...v }])),
+});
+
+// Validates anything loaded from IndexedDB or a JSON file.
+function normalize(raw) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.tiers)) throw new Error('invalid');
+  const images = {};
+  for (const [id, img] of Object.entries(raw.images || {})) {
+    if (img && typeof img.src === 'string' && img.src.startsWith('data:image/')) {
+      images[id] = { src: img.src, w: +img.w || 100, h: +img.h || 100,
+                     caption: typeof img.caption === 'string' ? img.caption.slice(0, 120) : '' };
+    }
+  }
+  const used = new Set();
+  const takeList = (arr) => (Array.isArray(arr) ? arr : [])
+    .filter((id) => typeof id === 'string' && images[id] && !used.has(id) && used.add(id));
+  const tierIds = new Set();
+  const tiers = raw.tiers.slice(0, 100).map((t, i) => {
+    let id = t && typeof t.id === 'string' ? t.id : uid();
+    if (tierIds.has(id)) id = uid();
+    tierIds.add(id);
+    return {
+      id,
+      label: t && typeof t.label === 'string' ? t.label.slice(0, 200) : '',
+      color: t && isHex(t.color) ? t.color : SWATCHES[i % SWATCHES.length],
+      items: takeList(t && t.items),
+    };
+  });
+  const pool = takeList(raw.pool);
+  for (const id of Object.keys(images)) if (!used.has(id)) pool.push(id);
+  return {
+    v: 1,
+    title: typeof raw.title === 'string' ? raw.title.slice(0, 200) : '',
+    bg: isHex(raw.bg) ? raw.bg : null,
+    crop: Object.hasOwn(CROPS, raw.crop) ? raw.crop : 'square',
+    tiers, pool, images,
+  };
+}
+
+function locate(id, s = state) {
+  const p = s.pool.indexOf(id);
+  if (p >= 0) return { listId: 'pool', list: s.pool, index: p, tier: null };
+  for (const t of s.tiers) {
+    const i = t.items.indexOf(id);
+    if (i >= 0) return { listId: t.id, list: t.items, index: i, tier: t };
+  }
+  return null;
+}
+const listById = (s, listId) => listId === 'pool' ? s.pool : s.tiers.find((t) => t.id === listId)?.items;
+function moveItem(s, id, listId, index) {
+  const target = listById(s, listId);
+  if (!target) return;
+  const from = locate(id, s);
+  if (from) from.list.splice(from.index, 1);
+  target.splice(clamp(index, 0, target.length), 0, id);
+}
+function newTier(s) {
+  const usedColors = new Set(s.tiers.map((t) => t.color));
+  return { id: uid(), label: 'ใหม่', color: SWATCHES.find((c) => !usedColors.has(c)) || SWATCHES[s.tiers.length % SWATCHES.length], items: [] };
+}
+const ratioOf = (img) => CROPS[state.crop].r ?? clamp(img.w / img.h, 0.4, 2.5);
+
+// ---------- undo / redo ----------
+const undoStack = [], redoStack = [];
+function pushUndo(snap) {
+  undoStack.push(snap);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  redoStack.length = 0;
+}
+function commit(mutate) {
+  pushUndo(clone(state));
+  mutate(state);
+  changed();
+}
+function replaceState(next) {
+  pushUndo(clone(state));
+  state = next;
+  changed();
+}
+function changed() { render(); scheduleSave(); }
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(clone(state));
+  state = undoStack.pop();
+  changed();
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(clone(state));
+  state = redoStack.pop();
+  changed();
+}
+
+// ---------- autosave (IndexedDB) ----------
+const idb = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('no indexedDB'));
+    const r = indexedDB.open('tier-list', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error('blocked'));
+  }));
+  return {
+    async get(key) {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const q = db.transaction('kv').objectStore('kv').get(key);
+        q.onsuccess = () => res(q.result);
+        q.onerror = () => rej(q.error);
+      });
+    },
+    async put(key, val) {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(val, key);
+        tx.oncomplete = () => res();
+        tx.onerror = () => rej(tx.error);
+        tx.onabort = () => rej(tx.error);
+      });
+    },
+  };
+})();
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 300);
+}
+async function saveNow() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  try {
+    await idb.put('state', state);
+    setStatus('บันทึกอัตโนมัติในเครื่องแล้ว');
+  } catch (e) {
+    setStatus('บันทึกอัตโนมัติไม่ได้ในเบราว์เซอร์นี้ ใช้ “บันทึก JSON” แทน');
+  }
+}
+const flushSave = () => { if (saveTimer) saveNow(); };
+
+// ---------- DOM refs ----------
+const sheet = $('#sheet'), board = $('#board'), pool = $('#pool'), titleEl = $('#title');
+const undoBtn = $('#undoBtn'), redoBtn = $('#redoBtn'), bgInput = $('#bgInput'), cropSeg = $('#cropSeg');
+const statusEl = $('#status'), toastEl = $('#toast');
+const setStatus = (t) => { statusEl.textContent = t; };
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+// ---------- theme ----------
+const THEME_KEY = 'tier-list-theme';
+const THEME_LABEL = { auto: '◐ ธีมอัตโนมัติ', light: '☀ ธีมสว่าง', dark: '☾ ธีมมืด' };
+let theme = 'auto';
+try { theme = localStorage.getItem(THEME_KEY) || 'auto'; } catch (e) { /* storage blocked */ }
+if (!THEME_LABEL[theme]) theme = 'auto';
+function applyTheme() {
+  if (theme === 'auto') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  $('#themeBtn').textContent = THEME_LABEL[theme];
+}
+function sheetColors() {
+  const bg = state.bg || getComputedStyle(document.documentElement).getPropertyValue('--sheet-default').trim() || '#fafafa';
+  const fg = textOn(bg) === '#111111' ? '#18181b' : '#f4f4f5';
+  return { bg, fg, sep: mix(bg, fg, 0.16), ctrl: mix(bg, fg, 0.06) };
+}
+
+// ---------- rendering ----------
+const itemEls = new Map();
+function itemEl(id) {
+  const img = state.images[id];
+  let el = itemEls.get(id);
+  if (!el) {
+    el = h('div', { class: 'item', 'data-id': id },
+      h('img', { src: img.src, alt: '', draggable: 'false' }),
+      h('div', { class: 'cap' }));
+    itemEls.set(id, el);
+  }
+  const cap = el.lastChild;
+  cap.textContent = img.caption || '';
+  cap.hidden = !img.caption;
+  el.title = img.caption || '';
+  el.style.setProperty('--r', ratioOf(img));
+  return el;
+}
+
+const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+const ICON_GRIP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+
+function renderRow(t) {
+  const text = h('span', { class: 'label-text', spellcheck: 'false', 'aria-label': 'ชื่อแถว' });
+  text.textContent = t.label;
+  if (!pres) text.contentEditable = EDITABLE;
+  bindEditable(text, (v) => {
+    const tier = state.tiers.find((x) => x.id === t.id);
+    if (tier) tier.label = v;
+  }, () => fitLabel(text.closest('.row')));
+  const gear = h('button', { class: 'gear', title: 'ตั้งค่าแถว', 'aria-label': 'ตั้งค่าแถว ' + t.label });
+  gear.innerHTML = ICON_GEAR;
+  gear.addEventListener('click', () => {
+    if (menuEl && menuEl.dataset.owner === t.id) closeMenu();
+    else openTierMenu(t.id, gear);
+  });
+  const handle = h('button', { class: 'handle', title: 'ลากเพื่อย้ายแถว', 'aria-label': 'ลากเพื่อย้ายแถว' });
+  handle.innerHTML = ICON_GRIP;
+  const label = h('div', { class: 'label', style: `background:${t.color};color:${textOn(t.color)}` },
+    h('div', { class: 'label-fit' }, text));
+  label.addEventListener('click', (e) => {
+    if (pres || e.target === text) return;
+    text.focus();
+    placeCaretAtEnd(text);
+  });
+  return h('div', { class: 'row', 'data-tier': t.id },
+    label,
+    h('div', { class: 'items', 'data-list': t.id }, t.items.map(itemEl)),
+    h('div', { class: 'ctrl' }, gear, handle));
+}
+
+function render() {
+  const c = sheetColors();
+  sheet.style.setProperty('--sheet-bg', c.bg);
+  sheet.style.setProperty('--sheet-fg', c.fg);
+  sheet.style.setProperty('--sheet-sep', c.sep);
+  sheet.style.setProperty('--sheet-ctrl', c.ctrl);
+  sheet.className = 'sheet crop-' + state.crop;
+  if (document.activeElement !== titleEl) titleEl.textContent = state.title;
+  titleEl.contentEditable = pres ? 'false' : EDITABLE;
+
+  board.replaceChildren(...state.tiers.map(renderRow));
+  pool.replaceChildren(...state.pool.map(itemEl));
+  $('#poolHint').hidden = state.pool.length > 0;
+  $('#poolCount').textContent = state.pool.length ? `· ${state.pool.length} รูป` : '';
+  for (const id of itemEls.keys()) if (!state.images[id]) itemEls.delete(id);
+
+  for (const b of cropSeg.children) b.setAttribute('aria-pressed', String(b.dataset.crop === state.crop));
+  bgInput.value = c.bg;
+  $('#bgResetBtn').disabled = !state.bg;
+  undoBtn.disabled = !undoStack.length;
+  redoBtn.disabled = !redoStack.length;
+  if (pres) applyPres(false);
+  fitLabels();
+}
+
+// Shrinks long tier labels so they fit inside the label box.
+function fitLabel(row) {
+  const fit = row.querySelector('.label-fit'), text = row.querySelector('.label-text');
+  const ih = parseFloat(getComputedStyle(row).getPropertyValue('--ih')) || 80;
+  let fs = Math.round(ih * 0.36);
+  text.style.fontSize = fs + 'px';
+  while (fs > 10 && (text.offsetHeight > fit.clientHeight || text.scrollWidth > fit.clientWidth + 1)) {
+    fs--;
+    text.style.fontSize = fs + 'px';
+  }
+}
+const fitLabels = () => { for (const row of board.querySelectorAll('.row')) fitLabel(row); };
+
+function placeCaretAtEnd(el) {
+  const sel = getSelection(), range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+// Inline text editing: state updates live, one undo step per edit session.
+function bindEditable(el, set, onInput) {
+  let snap = null, before = '';
+  el.addEventListener('focus', () => { snap = clone(state); before = el.textContent; });
+  el.addEventListener('input', () => {
+    set(el.textContent.replace(/\n/g, ' '));
+    onInput && onInput();
+    scheduleSave();
+  });
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    else if (e.key === 'Escape') { el.textContent = before; set(before); el.blur(); }
+  });
+  el.addEventListener('paste', (e) => {
+    if ([...(e.clipboardData?.files || [])].some((f) => f.type.startsWith('image/'))) return; // handled globally
+    if (EDITABLE === 'true') {
+      e.preventDefault();
+      document.execCommand('insertText', false, (e.clipboardData?.getData('text/plain') || '').replace(/\s+/g, ' '));
+    }
+  });
+  el.addEventListener('blur', () => {
+    const v = el.textContent.replace(/\s+/g, ' ').trim();
+    if (v !== el.textContent) el.textContent = v;
+    set(v);
+    if (snap && v !== before) { pushUndo(snap); changed(); }
+    snap = null;
+  });
+}
+bindEditable(titleEl, (v) => { state.title = v; });
+
+// ---------- popup menus ----------
+let menuEl = null;
+function openMenu(x, y, owner, build) {
+  closeMenu();
+  const m = h('div', { class: 'menu', role: 'menu', 'data-owner': owner });
+  build(m);
+  document.body.append(m);
+  const r = m.getBoundingClientRect();
+  const left = clamp(x, scrollX + 8, scrollX + innerWidth - r.width - 8);
+  const top = (y - scrollY) + r.height > innerHeight - 8 ? Math.max(scrollY + 8, y - r.height - 8) : y;
+  m.style.left = left + 'px';
+  m.style.top = top + 'px';
+  menuEl = m;
+}
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
+const menuBtn = (label, fn, cls) => h('button', { class: cls, role: 'menuitem', onclick: () => { closeMenu(); fn(); } }, label);
+document.addEventListener('pointerdown', (e) => {
+  if (menuEl && !menuEl.contains(e.target) && !e.target.closest('.gear')) closeMenu();
+}, true);
+
+function openTierMenu(tid, anchor) {
+  const r = anchor.getBoundingClientRect();
+  const tier = () => state.tiers.find((x) => x.id === tid);
+  const idx = () => state.tiers.findIndex((x) => x.id === tid);
+  openMenu(r.left + scrollX - 180, r.bottom + scrollY + 4, tid, (m) => {
+    m.append(h('div', { class: 'menu-label' }, 'สีของแถว'));
+    const sw = h('div', { class: 'swatches' });
+    const mark = () => { for (const b of sw.querySelectorAll('.swatch')) b.setAttribute('aria-pressed', String(b.dataset.c === tier()?.color)); };
+    for (const c of SWATCHES) {
+      sw.append(h('button', { class: 'swatch', 'data-c': c, style: `background:${c}`, 'aria-label': 'สี ' + c,
+        onclick: () => { if (tier() && tier().color !== c) commit(() => { tier().color = c; }); mark(); custom.value = c; } }));
+    }
+    const custom = h('input', { type: 'color', title: 'เลือกสีเอง', 'aria-label': 'เลือกสีเอง' });
+    custom.value = tier().color;
+    let snap = null;
+    custom.addEventListener('input', () => {
+      if (!tier()) return;
+      if (!snap) snap = clone(state);
+      tier().color = custom.value;
+      render(); mark();
+    });
+    custom.addEventListener('change', () => { if (snap) { pushUndo(snap); snap = null; changed(); } });
+    sw.append(custom);
+    m.append(sw);
+    mark();
+    m.append(h('hr'));
+    m.append(menuBtn('แทรกแถวด้านบน', () => commit((s) => s.tiers.splice(idx(), 0, newTier(s)))));
+    m.append(menuBtn('แทรกแถวด้านล่าง', () => commit((s) => s.tiers.splice(idx() + 1, 0, newTier(s)))));
+    if (idx() > 0) m.append(menuBtn('เลื่อนขึ้น', () => commit((s) => { const i = idx(); s.tiers.splice(i - 1, 0, ...s.tiers.splice(i, 1)); })));
+    if (idx() < state.tiers.length - 1) m.append(menuBtn('เลื่อนลง', () => commit((s) => { const i = idx(); s.tiers.splice(i + 1, 0, ...s.tiers.splice(i, 1)); })));
+    m.append(h('hr'));
+    if (tier().items.length) m.append(menuBtn('ล้างรูปในแถว (ย้ายกลับคลัง)', () => commit((s) => { s.pool.push(...tier().items); tier().items = []; })));
+    m.append(menuBtn('ลบแถว', () => commit((s) => { s.pool.push(...tier().items); s.tiers.splice(idx(), 1); }), 'danger'));
+  });
+}
+
+function openItemMenu(id, x, y) {
+  const loc = locate(id);
+  if (!loc) return;
+  openMenu(x, y, id, (m) => {
+    if (loc.tier) m.append(menuBtn('ย้ายกลับคลัง', () => commit((s) => moveItem(s, id, 'pool', s.pool.length))));
+    m.append(h('div', { class: 'menu-label' }, 'ข้อความใต้รูป'));
+    const inp = h('input', { type: 'text', maxlength: '60', placeholder: 'เช่น ชื่อ', 'aria-label': 'ข้อความใต้รูป' });
+    inp.value = state.images[id].caption || '';
+    const save = () => {
+      const v = inp.value.trim();
+      closeMenu();
+      if (state.images[id] && v !== (state.images[id].caption || '')) commit((s) => { s.images[id].caption = v; });
+    };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+    m.append(h('div', { class: 'menu-field' }, inp, h('button', { class: 'btn small', onclick: save }, 'บันทึก')));
+    m.append(h('hr'));
+    m.append(menuBtn('ลบรูป', () => commit((s) => {
+      const l = locate(id, s);
+      if (l) l.list.splice(l.index, 1);
+      delete s.images[id];
+    }), 'danger'));
+  });
+}
+
+// ---------- drag & drop (Pointer Events: mouse, pen and touch) ----------
+// Touch: hold ~250 ms to pick an image up (so normal swipes still scroll the page);
+// hold and release without moving opens the image menu. Row handles drag immediately.
+let drag = null;
+let lastPointerType = 'mouse';
+const HOLD_MS = 250;
+
+document.addEventListener('pointerdown', (e) => {
+  lastPointerType = e.pointerType;
+  if (pres || drag) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const handle = e.target.closest('.handle');
+  const item = !handle && e.target.closest('.item');
+  if (!handle && !(item && item.parentElement && item.parentElement.dataset.list)) return;
+  const el = handle ? handle.closest('.row') : item;
+  drag = {
+    kind: handle ? 'tier' : 'item',
+    el, id: handle ? el.dataset.tier : el.dataset.id,
+    pointerId: e.pointerId,
+    x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
+    touch: e.pointerType === 'touch' && !handle,
+    ready: false, started: false,
+  };
+  if (drag.touch) {
+    drag.timer = setTimeout(() => {
+      if (!drag || drag.started) return;
+      drag.ready = true;
+      drag.el.classList.add('lift');
+      if (navigator.vibrate) navigator.vibrate(8);
+    }, HOLD_MS);
+  } else {
+    e.preventDefault(); // no text selection / native image drag
+  }
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (drag && (drag.started || drag.ready)) e.preventDefault(); // stop the page from scrolling while dragging
+}, { passive: false });
+
+window.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  drag.x = e.clientX;
+  drag.y = e.clientY;
+  if (!drag.started) {
+    const dist = Math.hypot(drag.x - drag.x0, drag.y - drag.y0);
+    if (drag.touch && !drag.ready) { if (dist > 10) endDrag(); return; }
+    if (dist < 4) return;
+    startDrag();
+  }
+  updateDrag();
+});
+
+window.addEventListener('pointerup', (e) => {
+  if (!drag || e.pointerId !== drag.pointerId) return;
+  if (drag.started) return dropDrag();
+  const d = drag;
+  endDrag();
+  if (d.ready && d.kind === 'item') {
+    swallowClickUntil = Date.now() + 600; // the tap's own click must not hit the new menu
+    openItemMenu(d.id, e.pageX, e.pageY + 8);
+  }
+});
+let swallowClickUntil = 0;
+document.addEventListener('click', (e) => {
+  if (Date.now() < swallowClickUntil) { swallowClickUntil = 0; e.preventDefault(); e.stopPropagation(); }
+}, true);
+window.addEventListener('pointercancel', (e) => { if (drag && e.pointerId === drag.pointerId) endDrag(); });
+
+document.addEventListener('contextmenu', (e) => {
+  const item = e.target.closest('.item');
+  if (!item) return;
+  e.preventDefault();
+  if (pres || lastPointerType === 'touch' || !item.parentElement?.dataset.list) return;
+  openItemMenu(item.dataset.id, e.pageX, e.pageY);
+});
+
+function startDrag() {
+  const d = drag;
+  d.started = true;
+  clearTimeout(d.timer);
+  d.el.classList.remove('lift');
+  blurActive();
+  closeMenu();
+  const r = d.el.getBoundingClientRect();
+  d.dx = d.x0 - r.left;
+  d.dy = d.y0 - r.top;
+  d.left = r.left;
+  d.ghost = d.el.cloneNode(true);
+  d.ghost.classList.add('ghost');
+  d.ghost.style.width = r.width + 'px';
+  d.ghost.style.height = r.height + 'px';
+  if (d.kind === 'item') {
+    d.ph = h('div', { class: 'placeholder' });
+    d.ph.style.setProperty('--r', d.el.style.getPropertyValue('--r'));
+  } else {
+    d.ph = h('div', { class: 'row-placeholder', style: `height:${r.height}px` });
+  }
+  d.el.before(d.ph);
+  d.el.classList.add('drag-src');
+  sheet.append(d.ghost); // inside the sheet so it keeps the crop shape and colours
+  document.body.classList.add('dragging');
+  d.raf = requestAnimationFrame(autoScroll);
+}
+
+function updateDrag() {
+  const d = drag;
+  if (d.kind === 'item') {
+    d.ghost.style.transform = `translate(${d.x - d.dx}px, ${d.y - d.dy}px)`;
+    placeItem(d.x, d.y);
+  } else {
+    d.ghost.style.transform = `translate(${d.left}px, ${d.y - d.dy}px)`;
+    placeRow(d.y);
+  }
+}
+
+function placeItem(x, y) {
+  const d = drag;
+  const under = document.elementFromPoint(x, y);
+  if (!under) return;
+  let zone = under.closest('[data-list]');
+  if (!zone) {
+    const row = under.closest('.row');
+    if (row) zone = row.querySelector('.items');
+  }
+  if (!zone) return;
+  let before = null;
+  for (const c of zone.children) {
+    if (!c.classList.contains('item') || c === d.el) continue;
+    const r = c.getBoundingClientRect();
+    if (y < r.top || (y <= r.bottom && x < r.left + r.width / 2)) { before = c; break; }
+  }
+  if (before) { if (d.ph.nextElementSibling !== before) zone.insertBefore(d.ph, before); }
+  else if (d.ph.parentNode !== zone || zone.lastElementChild !== d.ph) zone.append(d.ph);
+}
+
+function placeRow(y) {
+  const d = drag;
+  let before = null;
+  for (const row of board.children) {
+    if (!row.classList.contains('row') || row === d.el) continue;
+    const r = row.getBoundingClientRect();
+    if (y < r.top + r.height / 2) { before = row; break; }
+  }
+  if (before) { if (d.ph.nextElementSibling !== before) board.insertBefore(d.ph, before); }
+  else if (board.lastElementChild !== d.ph) board.append(d.ph);
+}
+
+function autoScroll() {
+  if (!drag || !drag.started) return;
+  const edge = 70, y = drag.y;
+  let v = 0;
+  if (y < edge) v = -(edge - y) / 4;
+  else if (y > innerHeight - edge) v = (y - (innerHeight - edge)) / 4;
+  if (v) { scrollBy(0, clamp(v, -18, 18)); updateDrag(); }
+  drag.raf = requestAnimationFrame(autoScroll);
+}
+
+function dropDrag() {
+  const d = drag;
+  const parent = d.ph.parentNode;
+  let idx = 0;
+  if (parent) {
+    for (const c of parent.children) {
+      if (c === d.ph) break;
+      if (c !== d.el && c.classList.contains(d.kind === 'item' ? 'item' : 'row')) idx++;
+    }
+  }
+  endDrag();
+  if (!parent) return;
+  if (d.kind === 'item') {
+    const listId = parent.dataset.list;
+    const cur = locate(d.id);
+    if (listId && cur && !(cur.listId === listId && cur.index === idx)) commit((s) => moveItem(s, d.id, listId, idx));
+  } else {
+    const from = state.tiers.findIndex((t) => t.id === d.id);
+    if (from >= 0 && from !== idx) commit((s) => { s.tiers.splice(idx, 0, ...s.tiers.splice(from, 1)); });
+  }
+}
+
+function endDrag() {
+  const d = drag;
+  if (!d) return;
+  drag = null;
+  clearTimeout(d.timer);
+  cancelAnimationFrame(d.raf);
+  d.el.classList.remove('lift', 'drag-src');
+  if (d.ghost) d.ghost.remove();
+  if (d.ph) d.ph.remove();
+  document.body.classList.remove('dragging');
+}
+
+// ---------- importing images ----------
+async function decodeFile(file) {
+  try {
+    return await createImageBitmap(file);
+  } catch (e) {
+    // e.g. SVG: read locally with FileReader and decode through an <img>
+    const url = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(fr.error);
+      fr.readAsDataURL(file);
+    });
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    return img;
+  }
+}
+
+async function shrinkImage(file) {
+  const src = await decodeFile(file);
+  const sw = src.width || src.naturalWidth, sh = src.height || src.naturalHeight;
+  if (!sw || !sh) throw new Error('empty image');
+  const k = Math.min(1, MAX_IMG_SIDE / Math.max(sw, sh));
+  const w = Math.max(1, Math.round(sw * k)), hh = Math.max(1, Math.round(sh * k));
+  // Halve in steps for big photos so the small version stays sharp.
+  let cur = src, cw = sw, ch = sh;
+  while (cw / 2 > w && ch / 2 > hh) {
+    const c = document.createElement('canvas');
+    c.width = Math.round(cw / 2); c.height = Math.round(ch / 2);
+    const x = c.getContext('2d');
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(cur, 0, 0, c.width, c.height);
+    cur = c; cw = c.width; ch = c.height;
+  }
+  const out = document.createElement('canvas');
+  out.width = w; out.height = hh;
+  const ctx = out.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(cur, 0, 0, w, hh);
+  if (src.close) src.close();
+  // Keep PNG only when the image really has transparency; JPEG is much smaller.
+  const px = ctx.getImageData(0, 0, w, hh).data;
+  let alpha = false;
+  for (let i = 3; i < px.length; i += 4) if (px[i] < 250) { alpha = true; break; }
+  return { src: out.toDataURL(alpha ? 'image/png' : 'image/jpeg', 0.88), w, h: hh, caption: '' };
+}
+
+async function importImages(files) {
+  files = files.filter((f) => f.type.startsWith('image/'));
+  if (!files.length) return;
+  setStatus(`กำลังนำเข้า ${files.length} รูป…`);
+  const results = await Promise.all(files.map((f) => shrinkImage(f).catch(() => null)));
+  const ok = results.filter(Boolean);
+  if (ok.length) {
+    commit((s) => {
+      for (const img of ok) { const id = uid(); s.images[id] = img; s.pool.push(id); }
+    });
+  }
+  const failed = results.length - ok.length;
+  toast(`เพิ่ม ${ok.length} รูปในคลังแล้ว` + (failed ? ` (เปิดไม่ได้ ${failed} ไฟล์)` : ''));
+}
+
+$('#uploadBtn').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', (e) => { importImages([...e.target.files]); e.target.value = ''; });
+
+document.addEventListener('paste', (e) => {
+  const files = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/'));
+  if (!files.length) return;
+  e.preventDefault();
+  importImages(files);
+});
+
+let fileDragDepth = 0;
+const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+window.addEventListener('dragenter', (e) => { if (hasFiles(e)) { fileDragDepth++; document.body.classList.add('file-over'); } });
+window.addEventListener('dragleave', (e) => { if (hasFiles(e) && --fileDragDepth <= 0) { fileDragDepth = 0; document.body.classList.remove('file-over'); } });
+window.addEventListener('dragover', (e) => { if (hasFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+window.addEventListener('drop', (e) => {
+  if (!hasFiles(e)) return;
+  e.preventDefault();
+  fileDragDepth = 0;
+  document.body.classList.remove('file-over');
+  const files = [...e.dataTransfer.files];
+  const json = files.find((f) => /\.json$/i.test(f.name) || f.type === 'application/json');
+  if (json) importJSON(json);
+  else importImages(files);
+});
+
+// ---------- export PNG (drawn by hand on a canvas) ----------
+const FONT = 'system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif';
+const segmenter = window.Intl && Intl.Segmenter ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+
+// Word wrap that also works for Thai (no spaces between words).
+function wrapLines(ctx, text, maxW) {
+  const parts = segmenter ? Array.from(segmenter.segment(text), (s) => s.segment) : text.split(/(?<=\s)/);
+  const fits = (s) => ctx.measureText(s).width <= maxW;
+  const lines = [];
+  let line = '';
+  for (const p of parts) {
+    if (fits(line + p)) { line += p; continue; }
+    if (line.trim()) { lines.push(line.trimEnd()); line = ''; }
+    const q = p.trimStart();
+    if (fits(q)) { line = q; continue; }
+    for (const ch of q) {
+      if (!line || fits(line + ch)) line += ch;
+      else { lines.push(line); line = ch; }
+    }
+  }
+  if (line.trim() || !lines.length) lines.push(line.trimEnd());
+  return lines;
+}
+
+function fitText(ctx, text, maxW, maxH, maxSize, minSize, weight) {
+  for (let size = maxSize; size >= minSize; size--) {
+    ctx.font = `${weight} ${size}px ${FONT}`;
+    const lines = wrapLines(ctx, text, maxW);
+    if (lines.length * size * 1.18 <= maxH) return { size, lines };
+  }
+  ctx.font = `${weight} ${minSize}px ${FONT}`;
+  const lines = wrapLines(ctx, text, maxW);
+  return { size: minSize, lines: lines.slice(0, Math.max(1, Math.floor(maxH / (minSize * 1.18)))) };
+}
+
+function drawLines(ctx, lines, size, cx, cy) {
+  const lh = size * 1.18;
+  let y = cy - (lines.length * lh) / 2 + lh / 2;
+  for (const l of lines) { ctx.fillText(l, cx, y); y += lh; }
+}
+
+function drawItem(ctx, id, x, y, w, hh) {
+  const img = state.images[id], el = itemEl(id).firstChild;
+  ctx.save();
+  ctx.beginPath();
+  if (state.crop === 'circle') ctx.arc(x + w / 2, y + hh / 2, Math.min(w, hh) / 2, 0, Math.PI * 2);
+  else if (ctx.roundRect) ctx.roundRect(x, y, w, hh, 3);
+  else ctx.rect(x, y, w, hh);
+  ctx.clip();
+  // centre-crop, same as object-fit: cover
+  const iw = el.naturalWidth || img.w, ih = el.naturalHeight || img.h;
+  const s = Math.max(w / iw, hh / ih), sw = w / s, sh = hh / s;
+  ctx.drawImage(el, (iw - sw) / 2, (ih - sh) / 2, sw, sh, x, y, w, hh);
+  if (img.caption) {
+    const size = Math.round(hh * 0.14);
+    ctx.font = `600 ${size}px ${FONT}`;
+    const lines = wrapLines(ctx, img.caption, w - 6).slice(0, 2);
+    const stripH = lines.length * size * 1.15 + 4 + (state.crop === 'circle' ? hh * 0.08 : 0);
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    ctx.fillRect(x, y + hh - stripH, w, stripH);
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let ty = y + hh - stripH + 2 + size * 0.575;
+    for (const l of lines) { ctx.fillText(l, x + w / 2, ty); ty += size * 1.15; }
+  }
+  ctx.restore();
+}
+
+async function exportPNG() {
+  blurActive();
+  closeMenu();
+  const btn = $('#pngBtn');
+  btn.disabled = true;
+  try {
+    const ids = state.tiers.flatMap((t) => t.items);
+    await Promise.all(ids.map((id) => itemEl(id).firstChild.decode().catch(() => {})));
+    const c = sheetColors();
+    const W = 1000, PAD = 20, B = 2, LW = 120, IH = 100, GAP = 2;
+    const areaW = W - PAD * 2 - B * 2 - LW;
+    const scale = clamp(window.devicePixelRatio || 1, 2, 3);
+    const m = document.createElement('canvas').getContext('2d');
+
+    const title = state.title.trim();
+    m.font = `700 34px ${FONT}`;
+    const titleLines = title ? wrapLines(m, title, W - PAD * 2) : [];
+    const titleH = titleLines.length ? titleLines.length * 42 + 14 : 0;
+
+    const rows = state.tiers.map((t) => {
+      let x = GAP, y = GAP;
+      const pos = [];
+      for (const id of t.items) {
+        const w = Math.round(IH * ratioOf(state.images[id]));
+        if (x > GAP && x + w > areaW - GAP) { x = GAP; y += IH + GAP; }
+        pos.push({ id, x, y, w });
+        x += w + GAP;
+      }
+      return { t, pos, h: Math.max(IH + GAP * 2, pos.length ? y + IH + GAP : 0) };
+    });
+    const boardH = rows.length ? rows.reduce((a, r) => a + r.h, 0) + B * (rows.length + 1) : 0;
+    const H = PAD + titleH + boardH + PAD;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = c.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = c.fg;
+    ctx.font = `700 34px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    titleLines.forEach((l, i) => ctx.fillText(l, PAD + 4, PAD + i * 42));
+
+    let y = PAD + titleH;
+    if (rows.length) {
+      ctx.fillStyle = c.sep;
+      ctx.fillRect(PAD, y, W - PAD * 2, boardH);
+      y += B;
+    }
+    for (const r of rows) {
+      const lx = PAD + B, ax = lx + LW;
+      ctx.fillStyle = r.t.color;
+      ctx.fillRect(lx, y, LW, r.h);
+      ctx.fillStyle = c.bg;
+      ctx.fillRect(ax, y, areaW, r.h);
+      if (r.t.label) {
+        const f = fitText(ctx, r.t.label, LW - 14, Math.min(r.h, IH + GAP * 2) - 10, 36, 11, 700);
+        ctx.font = `700 ${f.size}px ${FONT}`;
+        ctx.fillStyle = textOn(r.t.color);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        drawLines(ctx, f.lines, f.size, lx + LW / 2, y + r.h / 2);
+      }
+      for (const p of r.pos) drawItem(ctx, p.id, ax + p.x, y + p.y, p.w, IH);
+      y += r.h + B;
+    }
+
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+    if (!blob) throw new Error('toBlob failed');
+    download(blob, fileName('png'));
+    toast('ดาวน์โหลด PNG แล้ว');
+  } catch (e) {
+    console.error(e);
+    toast('สร้างรูปไม่สำเร็จ');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function fileName(ext) {
+  const d = new Date();
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const base = state.title.trim().replace(/[\\/:*?"<>|#%\s]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'tier-list';
+  return `${base}-${date}.${ext}`;
+}
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// ---------- save / open JSON ----------
+function exportJSON() {
+  blurActive();
+  const data = { app: 'tier-list', version: 1, savedAt: new Date().toISOString(), state };
+  download(new Blob([JSON.stringify(data)], { type: 'application/json' }), fileName('json'));
+  toast('บันทึกไฟล์ JSON แล้ว ส่งให้เพื่อนเปิดต่อได้');
+}
+async function importJSON(file) {
+  try {
+    const raw = JSON.parse(await file.text());
+    replaceState(normalize(raw && raw.state ? raw.state : raw));
+    toast('เปิดไฟล์แล้ว (กด Ctrl+Z เพื่อย้อนกลับ)');
+  } catch (e) {
+    toast('ไฟล์นี้ไม่ใช่ tier list ที่บันทึกไว้');
+  }
+}
+$('#saveJsonBtn').addEventListener('click', exportJSON);
+$('#loadJsonBtn').addEventListener('click', () => $('#jsonInput').click());
+$('#jsonInput').addEventListener('change', (e) => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value = ''; });
+
+// ---------- presentation mode ----------
+let pres = null; // { order: [image ids], n: number revealed }
+function startPresentation() {
+  blurActive();
+  closeMenu();
+  pres = { order: state.tiers.flatMap((t) => t.items), n: 0, fs: false };
+  document.body.classList.add('presenting');
+  render();
+  scrollTo(0, 0);
+  const root = document.documentElement;
+  if (root.requestFullscreen) root.requestFullscreen().then(() => { if (pres) pres.fs = true; }).catch(() => {});
+  if (!pres.order.length) toast('ยังไม่มีรูปในแถว ลากรูปจากคลังขึ้นไปก่อน');
+}
+function applyPres(animate) {
+  const shown = new Set(pres.order.slice(0, pres.n));
+  for (const id of pres.order) {
+    const el = itemEls.get(id);
+    if (!el) continue;
+    el.classList.toggle('pres-hidden', !shown.has(id));
+    el.classList.remove('pop');
+  }
+  if (animate && pres.n > 0) {
+    const el = itemEls.get(pres.order[pres.n - 1]);
+    if (el) { void el.offsetWidth; el.classList.add('pop'); }
+  }
+  $('#presCount').textContent = `${pres.n} / ${pres.order.length}`;
+}
+function presStep(dir) {
+  if (!pres) return;
+  const n = clamp(pres.n + dir, 0, pres.order.length);
+  if (n === pres.n) return;
+  pres.n = n;
+  applyPres(dir > 0);
+}
+function exitPresentation() {
+  if (!pres) return;
+  pres = null;
+  document.body.classList.remove('presenting');
+  for (const el of itemEls.values()) el.classList.remove('pres-hidden', 'pop');
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  render();
+}
+$('#presBtn').addEventListener('click', startPresentation);
+$('#presExit').addEventListener('click', (e) => { e.stopPropagation(); exitPresentation(); });
+document.addEventListener('click', (e) => {
+  if (!pres || e.target.closest('#presBtn, .pres-bar')) return;
+  presStep(1);
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && pres && pres.fs) exitPresentation();
+});
+
+// ---------- keyboard ----------
+document.addEventListener('keydown', (e) => {
+  if (pres) {
+    if (['ArrowRight', 'ArrowDown', ' ', 'Enter', 'PageDown'].includes(e.key)) { e.preventDefault(); presStep(1); }
+    else if (['ArrowLeft', 'ArrowUp', 'Backspace', 'PageUp'].includes(e.key)) { e.preventDefault(); presStep(-1); }
+    else if (e.key === 'Escape') exitPresentation();
+    return;
+  }
+  if (e.key === 'Escape') { if (drag) endDrag(); closeMenu(); return; }
+  if (isEditable(e.target) || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+});
+
+// ---------- toolbar ----------
+for (const [key, c] of Object.entries(CROPS)) {
+  cropSeg.append(h('button', { 'data-crop': key, 'aria-pressed': 'false',
+    onclick: () => { if (state.crop !== key) commit((s) => { s.crop = key; }); } }, c.label));
+}
+$('#addRowBtn').addEventListener('click', () => commit((s) => s.tiers.push(newTier(s))));
+undoBtn.addEventListener('click', undo);
+redoBtn.addEventListener('click', redo);
+$('#pngBtn').addEventListener('click', exportPNG);
+$('#themeBtn').addEventListener('click', () => {
+  theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme];
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* storage blocked */ }
+  applyTheme();
+  render();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+let bgSnap = null;
+bgInput.addEventListener('input', () => {
+  if (!bgSnap) bgSnap = clone(state);
+  state.bg = bgInput.value;
+  render();
+});
+bgInput.addEventListener('change', () => { if (bgSnap) { pushUndo(bgSnap); bgSnap = null; changed(); } });
+$('#bgResetBtn').addEventListener('click', () => { if (state.bg) commit((s) => { s.bg = null; }); });
+
+const resetDlg = $('#resetDlg');
+$('#resetBtn').addEventListener('click', () => { closeMenu(); resetDlg.showModal(); });
+resetDlg.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-v]');
+  if (!b) { if (e.target === resetDlg) resetDlg.close(); return; }
+  resetDlg.close();
+  if (b.dataset.v === 'pool') {
+    commit((s) => { for (const t of s.tiers) { s.pool.push(...t.items); t.items = []; } });
+    toast('ย้ายรูปทั้งหมดกลับคลังแล้ว');
+  } else if (b.dataset.v === 'all') {
+    replaceState(defaultState());
+    toast('ล้างทั้งหมดแล้ว (กด Ctrl+Z เพื่อย้อนกลับ)');
+  }
+});
+
+window.addEventListener('resize', fitLabels);
+window.addEventListener('pagehide', flushSave);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+
+// ---------- start ----------
+applyTheme();
+render();
+idb.get('state').then((saved) => {
+  if (!saved) return;
+  try { state = normalize(saved); render(); }
+  catch (e) { setStatus('งานที่บันทึกไว้เสียหาย เริ่มใหม่ให้แล้ว'); }
+}).catch(() => setStatus('บันทึกอัตโนมัติไม่ได้ในเบราว์เซอร์นี้ ใช้ “บันทึก JSON” แทน'));
+})();
+</script>
+</body>
+</html>
