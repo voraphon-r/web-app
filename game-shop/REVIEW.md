@@ -69,3 +69,13 @@ Edge + Playwright ผ่าน: แสดงตารางตัวอย่า
 ทดสอบ Auth login จริงด้วยบัญชีทดสอบใหม่, REST non-member read/insert, anon access ผ่าน. ทดสอบ SQL กะ/เครื่อง20/กันซ้ำ/ปิดกะ ผ่านและ rollback. Cleanup บัญชีทดสอบแล้ว เหลือ Auth1/member1/shift0/entry0/bucket0/object0
 
 เพิ่ม regression test ป้องกันกลับไปใช้ Supabase ของ Todo หรือ Kungten. รหัสผ่านบัญชีร้านยังใช้เดิม ต้องเข้าสู่ระบบใหม่; ไม่ได้ทดสอบรหัสผ่านจริงของเจ้าของเพราะไม่ขอรับรหัสผ่าน
+
+## สถานะล่าสุด: กลับใช้ voraphon-apps เพื่อประหยัดโควต้า
+
+ผู้ใช้ยกเลิกการใช้โปรเจกต์แยก game-shop. หน้าเว็บกลับไปใช้ qfxqjpqpytkaymlyjuuz และ schema game_shop ร่วมโปรเจกต์ voraphon-apps กับ Kungten (schema kungten_order) แต่ยังแยกจาก Todo ที่ rfmkmerdiusocpflyhoq
+
+ตรวจเทียบก่อนเปลี่ยน: ทั้งสองโปรเจกต์มีสมาชิก/บัญชีร้านคนเดิม ต้นทางแยกยังไม่มีกะ รายการขาย bucket หรือ object ใหม่ จึงไม่มีข้อมูลที่ต้องคัดลอกกลับ. ไม่แก้บัญชีหรือข้อมูล Todo/Kungten
+
+ทดสอบ 7/7 ผ่าน และ SQL บน voraphon-apps ตรวจสมาชิก เปิดกะ บันทึกเครื่อง20 และปิดกะผ่านใน transaction แล้ว rollback ไม่เหลือยอดทดลอง. ใช้อีเมลและรหัสผ่านเดิมของ voraphon-apps
+
+การลบโปรเจกต์แยกและการเปิด Todo ที่ pause ให้ตรวจสถานะจริงจาก Supabase; บันทึกการแยกโปรเจกต์ก่อนหน้านี้เป็นประวัติ ไม่ใช่การเชื่อมต่อปัจจุบัน
