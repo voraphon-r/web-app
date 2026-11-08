@@ -59,3 +59,13 @@ Edge + Playwright ผ่าน: แสดงตารางตัวอย่า
 - security advisor หลังเปลี่ยนไม่มี findings เพิ่มใน game_shop; warnings เดิมของแอปอื่นไม่ถูกแก้
 - Computer Use หยุดเพราะไม่สามารถยืนยัน browser URL จึงไม่มีการแก้ Dashboard ผ่าน UI; ใช้ Supabase connector ที่ได้รับอนุมัติตั้ง API แทน
 - รายงานก่อนหน้านี้เป็นสถานะก่อนอนุมัติ ให้ยึดอัปเดตส่วนนี้เป็นสถานะปัจจุบัน; ยังไม่ merge หรือเปิด Netlify production ของ Game-Shop
+
+## แยก Database/Auth/Storage หลังผู้ใช้อนุมัติองค์กร
+
+สร้างโปรเจกต์ game-shop เฉพาะในองค์กร voraphon.r@gmail.com ref ncbjaeitjcpoayvkadwn และเปลี่ยนการเชื่อมต่อหน้าเว็บเฉพาะ Game-Shop; Todo และ Kungten ไม่เปลี่ยนแปลง
+
+คัดลอกสมาชิกและเฉพาะบัญชี Auth/identity ของ Game-Shop พร้อม password hash เดิม (ตรวจเทียบตรงกัน) ไม่ย้าย session หรือ token. ไม่มีกะ/รายการ/Storage ของ Game-Shop ต้นทางให้คัดลอก. เก็บต้นทางไว้ทั้งหมด
+
+ทดสอบ Auth login จริงด้วยบัญชีทดสอบใหม่, REST non-member read/insert, anon access ผ่าน. ทดสอบ SQL กะ/เครื่อง20/กันซ้ำ/ปิดกะ ผ่านและ rollback. Cleanup บัญชีทดสอบแล้ว เหลือ Auth1/member1/shift0/entry0/bucket0/object0
+
+เพิ่ม regression test ป้องกันกลับไปใช้ Supabase ของ Todo หรือ Kungten. รหัสผ่านบัญชีร้านยังใช้เดิม ต้องเข้าสู่ระบบใหม่; ไม่ได้ทดสอบรหัสผ่านจริงของเจ้าของเพราะไม่ขอรับรหัสผ่าน

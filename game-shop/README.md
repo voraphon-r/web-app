@@ -5,7 +5,7 @@
 
 - หน้าเว็บ: `public/index.html` (ไฟล์เดียว) จำนวนเครื่องตั้งที่ `MACHINE_COUNT`
 - ฐานข้อมูล: `supabase/setup.sql` สร้าง schema `game_shop` (ตาราง `members`, `shifts`, `shift_entries`)
-- ใช้ Supabase โปรเจกต์ที่ใช้ร่วมกันหลายแอป (`voraphon-apps`) แต่ละแอปอยู่คนละ schema
+- ใช้ Supabase โปรเจกต์เฉพาะ `game-shop` (`ncbjaeitjcpoayvkadwn`) แยก Database, Auth และ Storage จาก Todo และ Kungten
 
 ## ทำอะไรได้
 
@@ -17,7 +17,7 @@
 
 ## ตั้งค่าครั้งแรก
 
-1. Supabase (โปรเจกต์ voraphon-apps) > SQL Editor > วางเนื้อหา `supabase/setup.sql` > Run
+1. Supabase (โปรเจกต์ game-shop) > SQL Editor > วางเนื้อหา `supabase/setup.sql` > Run
 2. Integrations > Data API > Settings > Exposed schemas > เพิ่ม `game_shop` > Save
 3. Authentication > Users > Add user > Create new user: ใส่อีเมล + รหัสผ่านของคนที่จะใช้ (ติ๊ก Auto Confirm User)
 4. SQL Editor: เพิ่มอีเมลนั้นเป็นสมาชิก
@@ -64,3 +64,18 @@
 - ทดสอบในเครื่องผ่าน 6/6 และ Edge ผ่านเครื่องครบ 20 ปุ่ม กับหน้าจอ 4 ขนาด
 
 ยังไม่ merge และยังไม่ตั้ง Netlify production ของ Game-Shop. Netlify previews ที่ผูกกับ PR เป็นของแอปอื่น ไม่ใช่หลักฐานว่า Game-Shop เปิดให้ใช้แล้ว ต้องตั้ง publish directory game-shop/public โดยเฉพาะและทดสอบบัญชีร้าน/Realtime สองเครื่องจริงก่อนเปิดใช้
+
+## แยกโปรเจกต์ Game-Shop แล้ว
+
+สถานะปัจจุบันให้ยึดส่วนนี้แทนบันทึกเก่าด้านบน: Game-Shop ใช้โปรเจกต์ ncbjaeitjcpoayvkadwn โดยเฉพาะ URL https://ncbjaeitjcpoayvkadwn.supabase.co และ publishable key ของโปรเจกต์ใหม่นี้
+
+- Todo คงใช้ rfmkmerdiusocpflyhoq และ Kungten คงใช้ qfxqjpqpytkaymlyjuuz ไม่แก้โค้ด/ข้อมูล/บัญชี/Storage/การตั้งค่าของแอปทั้งสอง
+- Database: ย้ายสมาชิก 1 บัญชี มี RLS/constraints/Realtime ครบ; ต้นทางไม่มีรายการขายหรือกะให้คัดลอก
+- Auth: คัดลอกเฉพาะบัญชีของสมาชิก Game-Shop และ email identity พร้อม password hash เดิม ไม่คัดลอก session/token เดิม ต้อง login ใหม่ด้วยอีเมลและรหัสผ่านเดิม
+- Storage: ต้นทางไม่มี bucket หรือ object ของ Game-Shop และแอปยังไม่มีฟังก์ชันอัปโหลด จึงไม่สร้าง bucket ที่ไม่ใช้และไม่คัดลอกไฟล์ของแอปอื่น; Storage ต่อจากนี้เป็นบริการของโปรเจกต์ใหม่เท่านั้น
+- โปรเจกต์ใหม่ expose public/graphql_public/game_shop; game_shop_private ไม่ expose
+- ทดสอบ Auth password login ด้วยบัญชีชั่วคราวและ REST สิทธิ์คนนอก/anon ผ่าน; ลบบัญชีทดสอบแล้ว เหลือบัญชีร้าน 1 บัญชี
+- ทดสอบ SQL เปิดกะ/เครื่อง20/UUIDซ้ำ/ปิดกะ/ห้ามแก้หลังปิดใน transaction แล้ว rollback ไม่เหลือกะ/รายการทดลอง
+- เปรียบเทียบ password hash ของบัญชีร้านแล้วตรงกัน แต่ยังไม่ได้ให้เจ้าของลอง login ด้วยรหัสผ่านจริงหลังย้าย
+- โปรเจกต์เก่าและข้อมูล Game-Shop เดิมเก็บไว้ครบ ไม่ลบหรือปิดเพื่อคงทางย้อนกลับ
+- Security advisor: มีคำเตือนค่าเริ่มต้น Leaked Password Protection Disabled; ไม่มี findings ด้าน RLS ของ Game-Shop

@@ -1,6 +1,6 @@
 begin;
 -- Game-Shop: บันทึกประจำกะ ร้านเกม
--- รันไฟล์นี้ใน Supabase SQL Editor ของโปรเจกต์ที่ใช้ร่วมกัน (voraphon-apps)
+-- รันไฟล์นี้ใน Supabase SQL Editor ของโปรเจกต์เฉพาะ game-shop
 -- ทุกอย่างของแอปนี้อยู่ใน schema "game_shop" แยกจากแอปอื่น
 -- รันซ้ำได้ ไม่ลบข้อมูลที่บันทึกไว้
 
