@@ -1,55 +1,44 @@
--- Game-Shop: บันทึกรายรับรายจ่ายร้านเกม
+-- Game-Shop: บันทึกประจำกะ ร้านเกม
 -- รันไฟล์นี้ใน Supabase SQL Editor ของโปรเจกต์ที่ใช้ร่วมกัน (voraphon-apps)
 -- ทุกอย่างของแอปนี้อยู่ใน schema "game_shop" แยกจากแอปอื่น
--- รันซ้ำได้ ไม่ลบข้อมูลที่บันทึกไว้ (หมวดหมู่ตั้งต้นจะใส่เฉพาะตอนตารางยังว่าง)
+-- รันซ้ำได้ ไม่ลบข้อมูลที่บันทึกไว้
 
 create schema if not exists game_shop;
 
 -- สมาชิก: อีเมลที่อนุญาตให้ใช้แอปนี้ (ต้องมีบัญชีใน Authentication > Users ด้วย)
+-- แนะนำ: ทำบัญชีร้าน 1 บัญชี ล็อกอินค้างไว้ที่เครื่องในร้าน
 create table if not exists game_shop.members (
   email        text primary key check (email = lower(email)),
   display_name text not null check (char_length(btrim(display_name)) between 1 and 40),
   created_at   timestamptz not null default now()
 );
 
--- หมวดหมู่ของรายรับ/รายจ่าย (แก้ชื่อ เพิ่ม หรือซ่อนได้ใน Table Editor)
-create table if not exists game_shop.categories (
-  id         bigint generated always as identity primary key,
-  kind       text    not null check (kind in ('income', 'expense')),
-  name       text    not null check (char_length(btrim(name)) between 1 and 40),
-  sort_order integer not null default 0,
-  active     boolean not null default true,
-  unique (kind, name)
+-- กะ: 1 แถว = 1 กะ (เปิดกะ ... ปิดกะ)
+create table if not exists game_shop.shifts (
+  id          uuid primary key default gen_random_uuid(),
+  opened_at   timestamptz not null default now(),
+  closed_at   timestamptz,
+  staff_name  text not null check (char_length(btrim(staff_name)) between 1 and 40),
+  note        text check (note is null or char_length(note) <= 200)
 );
+-- เปิดได้ทีละ 1 กะ
+create unique index if not exists shifts_one_open_idx on game_shop.shifts ((true)) where closed_at is null;
+create index if not exists shifts_opened_at_idx on game_shop.shifts (opened_at desc);
 
--- รายการ: 1 แถว = รายรับหรือรายจ่าย 1 รายการ
-create table if not exists game_shop.entries (
-  id             uuid primary key default gen_random_uuid(),
-  created_at     timestamptz not null default now(),
-  updated_at     timestamptz not null default now(),
-  entry_date     date    not null default (now() at time zone 'Asia/Bangkok')::date,
-  kind           text    not null check (kind in ('income', 'expense')),
-  category       text    not null check (char_length(btrim(category)) between 1 and 40),
-  amount         numeric(12,2) not null check (amount > 0),
-  payment_method text    not null default 'เงินสด' check (payment_method in ('เงินสด', 'โอน', 'บัตร', 'อื่นๆ')),
-  note           text    check (note is null or char_length(note) <= 200),
-  created_by     text    not null default lower(auth.jwt() ->> 'email'),
-  updated_by     text
+-- รายการในกะ: 1 แถว = ลูกค้า 1 ราย (เหมือน 1 บรรทัดในสมุด)
+create table if not exists game_shop.shift_entries (
+  id            uuid primary key default gen_random_uuid(),
+  shift_id      uuid not null references game_shop.shifts(id) on delete cascade,
+  created_at    timestamptz not null default now(),
+  machine       integer not null check (machine between 1 and 99),
+  game_amount   numeric(10,2) not null default 0 check (game_amount >= 0),
+  drink_amount  numeric(10,2) not null default 0 check (drink_amount >= 0),
+  pay_method    text not null check (pay_method in ('cash', 'transfer')),
+  cash_received numeric(10,2) check (cash_received is null or cash_received >= 0),  -- เงินที่ลูกค้าให้มา (ไว้คิดเงินทอน)
+  note          text check (note is null or char_length(note) <= 120),
+  check (game_amount + drink_amount > 0)
 );
-create index if not exists entries_entry_date_idx on game_shop.entries (entry_date);
-
--- ใครแก้ล่าสุด และเวลาแก้
-create or replace function game_shop.touch_entry() returns trigger
-language plpgsql set search_path = '' as $$
-begin
-  new.updated_at := now();
-  new.updated_by := lower(auth.jwt() ->> 'email');
-  new.created_by := old.created_by;
-  return new;
-end $$;
-drop trigger if exists entries_touch on game_shop.entries;
-create trigger entries_touch before update on game_shop.entries
-  for each row execute function game_shop.touch_entry();
+create index if not exists shift_entries_shift_idx on game_shop.shift_entries (shift_id, created_at);
 
 -- เช็กว่าคนที่ล็อกอินอยู่เป็นสมาชิกของแอปนี้หรือไม่
 create or replace function game_shop.is_member() returns boolean
@@ -65,59 +54,39 @@ revoke all on all tables in schema game_shop from anon;
 grant usage on schema game_shop to authenticated;
 grant execute on function game_shop.is_member() to authenticated;
 grant select on game_shop.members to authenticated;
-grant select on game_shop.categories to authenticated;
-grant select, insert, update, delete on game_shop.entries to authenticated;
+grant select, insert, update, delete on game_shop.shifts        to authenticated;
+grant select, insert, update, delete on game_shop.shift_entries to authenticated;
 
-alter table game_shop.members    enable row level security;
-alter table game_shop.categories enable row level security;
-alter table game_shop.entries    enable row level security;
+alter table game_shop.members       enable row level security;
+alter table game_shop.shifts        enable row level security;
+alter table game_shop.shift_entries enable row level security;
 
 drop policy if exists "members see members" on game_shop.members;
 create policy "members see members" on game_shop.members
   for select to authenticated using (game_shop.is_member());
 
-drop policy if exists "members read categories" on game_shop.categories;
-create policy "members read categories" on game_shop.categories
-  for select to authenticated using (game_shop.is_member());
-
-drop policy if exists "members read entries"   on game_shop.entries;
-drop policy if exists "members add entries"    on game_shop.entries;
-drop policy if exists "members change entries" on game_shop.entries;
-drop policy if exists "members delete entries" on game_shop.entries;
-create policy "members read entries"   on game_shop.entries for select to authenticated using (game_shop.is_member());
-create policy "members add entries"    on game_shop.entries for insert to authenticated with check (game_shop.is_member());
-create policy "members change entries" on game_shop.entries for update to authenticated using (game_shop.is_member()) with check (game_shop.is_member());
-create policy "members delete entries" on game_shop.entries for delete to authenticated using (game_shop.is_member());
-
--- Realtime: ทุกเครื่องเห็นรายการใหม่ทันที
 do $$
+declare t text;
 begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'game_shop' and tablename = 'entries'
-  ) then
-    alter publication supabase_realtime add table game_shop.entries;
-  end if;
+  foreach t in array array['shifts', 'shift_entries'] loop
+    execute format('drop policy if exists "members read"   on game_shop.%I', t);
+    execute format('drop policy if exists "members add"    on game_shop.%I', t);
+    execute format('drop policy if exists "members change" on game_shop.%I', t);
+    execute format('drop policy if exists "members delete" on game_shop.%I', t);
+    execute format('create policy "members read"   on game_shop.%I for select to authenticated using (game_shop.is_member())', t);
+    execute format('create policy "members add"    on game_shop.%I for insert to authenticated with check (game_shop.is_member())', t);
+    execute format('create policy "members change" on game_shop.%I for update to authenticated using (game_shop.is_member()) with check (game_shop.is_member())', t);
+    execute format('create policy "members delete" on game_shop.%I for delete to authenticated using (game_shop.is_member())', t);
+
+    -- Realtime: ทุกเครื่องเห็นรายการใหม่ทันที
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'game_shop' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table game_shop.%I', t);
+    end if;
+  end loop;
 end $$;
 
--- หมวดหมู่ตั้งต้น (ใส่เฉพาะครั้งแรก)
-insert into game_shop.categories (kind, name, sort_order)
-select v.kind, v.name, v.sort_order
-from (values
-  ('income',  'ค่าเล่นเกม (รายชั่วโมง)', 10),
-  ('income',  'ขายขนม/เครื่องดื่ม',       20),
-  ('income',  'ขายบัตรเติมเงิน/ไอเท็ม',   30),
-  ('income',  'รายรับอื่นๆ',              90),
-  ('expense', 'ค่าเช่าร้าน',              10),
-  ('expense', 'ค่าไฟ',                    20),
-  ('expense', 'ค่าน้ำ',                    25),
-  ('expense', 'ค่าอินเทอร์เน็ต',          30),
-  ('expense', 'ซื้อสินค้าเข้าร้าน',        40),
-  ('expense', 'ค่าจ้างพนักงาน',           50),
-  ('expense', 'ซ่อม/อุปกรณ์คอม',          60),
-  ('expense', 'รายจ่ายอื่นๆ',             90)
-) as v(kind, name, sort_order)
-where not exists (select 1 from game_shop.categories);
-
 -- ===== เพิ่มคนที่ใช้แอปได้ (แก้อีเมลแล้วรันเฉพาะบรรทัดนี้) =====
--- insert into game_shop.members (email, display_name) values ('someone@example.com', 'ชื่อเล่น');
+-- insert into game_shop.members (email, display_name) values ('someone@example.com', 'ร้านเกม');
