@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>รีเซ็ตรหัสผ่าน · Game-Shop</title>
+<style>*{box-sizing:border-box}body{font-family:Tahoma,sans-serif;background:#f5f6fb;color:#1d2233;margin:0;padding:32px 16px}.panel{max-width:520px;margin:auto;background:white;border:1px solid #e4e6ef;border-radius:18px;padding:24px}h1{font-size:24px}label{display:block;margin:18px 0 8px}input,button{font:inherit;width:100%;padding:13px;border-radius:10px;border:1px solid #d5d8e1}button{background:#6d28d9;color:white;border:0;margin-top:20px;cursor:pointer}button:disabled{opacity:.5;cursor:default}a{color:#6d28d9}.msg{line-height:1.6;overflow-wrap:anywhere}.err{color:#b91c1c}[hidden]{display:none!important}</style>
+</head>
+<body><main class="panel">
+<h1>รีเซ็ตรหัสผ่าน Game-Shop</h1>
+<form id="requestForm"><p>ใส่อีเมลบัญชีร้าน เพื่อรับลิงก์ตั้งรหัสผ่านใหม่</p>
+<label for="email">อีเมล</label><input id="email" type="email" autocomplete="email" required>
+<button id="requestBtn" type="submit">ส่งลิงก์รีเซ็ตรหัสผ่าน</button></form>
+<form id="updateForm" hidden><p>ตั้งรหัสผ่านใหม่ของคุณเอง ไม่ต้องส่งรหัสผ่านให้ผู้อื่น</p>
+<label for="newPassword">รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</label><input id="newPassword" type="password" minlength="8" autocomplete="new-password" required>
+<label for="confirmPassword">ยืนยันรหัสผ่านใหม่</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required>
+<button id="updateBtn" type="submit">บันทึกรหัสผ่านใหม่</button></form>
+<p class="msg" id="message" role="status" aria-live="polite"></p><p><a href="/">กลับหน้าเข้าสู่ระบบ</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const db=supabase.createClient('https://qfxqjpqpytkaymlyjuuz.supabase.co','sb_publishable_7A3d5nMlhvAu6vLB2VvG3A_uyKserby');
+let recovering=false,busy=false;
+const message=(text,error=false)=>{$('message').textContent=text;$('message').classList.toggle('err',error)};
+function setRecovery(value){recovering=value;$('requestForm').hidden=value;$('updateForm').hidden=!value}
+// Recovery is established by Supabase's verified session, never by a query flag alone.
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY' && session){setRecovery(true);message('ลิงก์ยืนยันแล้ว กรุณาตั้งรหัสผ่านใหม่');}
+ if(event==='SIGNED_OUT')setRecovery(false);
+});
+const params=new URLSearchParams(window.location.hash.slice(1));
+if(params.has('error'))message('ลิงก์ใช้ไม่ได้หรือหมดอายุ กรุณาขอลิงก์ใหม่',true);
+$('requestForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();if(busy)return;busy=true;$('requestBtn').disabled=true;message('กำลังส่งคำขอ…');
+ try{
+ const {error}=await db.auth.resetPasswordForEmail($('email').value.trim(),{redirectTo:'https://game-shop-voraphon.netlify.app/recovery.html'});
+ if(error)throw error;
+ message('หากอีเมลนี้มีบัญชี คุณจะได้รับลิงก์รีเซ็ต กรุณาตรวจกล่องจดหมายและสแปม แล้วใช้ลิงก์ล่าสุด');
+ }catch(error){message(error.status===429?'ส่งคำขอถี่เกินไป กรุณารอสักครู่แล้วลองใหม่':'ส่งอีเมลไม่ได้ กรุณาลองใหม่ภายหลัง',true)}
+ finally{busy=false;$('requestBtn').disabled=false}
+});
+$('updateForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();if(busy || !recovering)return;
+ const password=$('newPassword').value;
+ if(password.length<8){message('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',true);return}
+ if(password!==$('confirmPassword').value){message('รหัสผ่านทั้งสองช่องไม่ตรงกัน',true);return}
+ busy=true;$('updateBtn').disabled=true;
+ try{
+ const {error}=await db.auth.updateUser({password});if(error)throw error;
+ $('newPassword').value='';$('confirmPassword').value='';setRecovery(false);$('requestForm').hidden=true;
+ message('ตั้งรหัสผ่านใหม่แล้ว กดกลับหน้าเข้าสู่ระบบ แล้วใช้รหัสผ่านใหม่');
+ try { await db.auth.signOut({scope:'local'}); } catch {} 
+ $('requestForm').hidden=true;
+ }catch(error){message('ตั้งรหัสผ่านไม่ได้ รหัสใหม่อาจไม่ผ่านเงื่อนไขหรือเหมือนเดิม หากลิงก์หมดอายุให้ขอลิงก์ใหม่',true)}
+ finally{busy=false;$('updateBtn').disabled=false}
+});
+</script></body></html>

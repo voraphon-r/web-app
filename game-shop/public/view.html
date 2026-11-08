@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ดูกะปัจจุบัน · Game-Shop</title>
+<style>*{box-sizing:border-box}body{font-family:Tahoma,sans-serif;margin:0;padding:20px 12px 40px;background:#f5f6fb;color:#1d2233}.wrap{max-width:640px;margin:auto}h1{font-size:23px;margin-bottom:8px}.panel{background:white;border:1px solid #e4e6ef;border-radius:18px;padding:14px;margin:12px 0}.hint{color:#6b7280;font-size:14px;line-height:1.6}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{padding:12px 8px;border-radius:12px;background:#f1f2f6;font-size:13px}.card b{display:block;font-size:22px;margin-top:4px}.cash{color:#15803d}.tf{color:#1d4ed8}a,button{color:#6d28d9}button{background:#ede9fe;border:0;border-radius:10px;padding:10px;font:inherit;cursor:pointer}button:disabled{opacity:.5}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;padding:9px 3px;border-bottom:1px dashed #e4e6ef;white-space:nowrap}th{font-size:12px;color:#6b7280}th:first-child,td:first-child{text-align:left}small{display:block;font-size:11px;color:#6b7280}.err{color:#b91c1c}[hidden]{display:none!important}</style></head>
+<body><main class="wrap"><h1>🎮 กะปัจจุบัน</h1><p class="hint">ดูอย่างเดียว · ไม่ต้องเข้าสู่ระบบ<br>อัปเดตอัตโนมัติทุก 15 วินาที</p>
+<p><a href="/">เข้าสู่ระบบเพื่อบันทึก</a></p><button id="refreshBtn">อัปเดตตอนนี้</button><p id="status" class="hint" role="status" aria-live="polite">กำลังโหลด…</p>
+<section id="shiftPanel" hidden class="panel"><h2 id="title"></h2><p class="hint" id="opened"></p><div class="cards"><div class="card">รายการ<b id="count"></b></div><div class="card cash">เงินสด<b id="cash"></b></div><div class="card tf">โอน<b id="transfer"></b></div></div></section>
+<section id="entryPanel" hidden class="panel"><h2>รายการในกะนี้</h2><div id="book" class="table-wrap"></div></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>
+const $=id=>document.getElementById(id);
+// Always use anon even if this browser has a staff login in another tab.
+const db=supabase.createClient('https://qfxqjpqpytkaymlyjuuz.supabase.co','sb_publishable_7A3d5nMlhvAu6vLB2VvG3A_uyKserby',{db:{schema:'game_shop'},auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+const money=n=>Number(n).toLocaleString('th-TH',{maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const time=ts=>new Date(ts).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'});
+let loading=false;
+function render(data){
+$('shiftPanel').hidden=!data;$('entryPanel').hidden=!data;
+if(!data){$('book').textContent='';$('status').textContent='ยังไม่มีกะที่เปิดอยู่';return}
+$('title').textContent='กะของ '+data.shift.staff_name;
+$('opened').textContent='เปิด '+new Date(data.shift.opened_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'});
+let cash=0,transfer=0;const rows=data.entries.map(e=>{
+const cents=Math.round(Number(e.game_amount)*100)+Math.round(Number(e.drink_amount)*100);if(e.pay_method==='cash')cash+=cents;else transfer+=cents;
+const total=cents/100;const change=e.pay_method==='cash'&&e.cash_received>total?'<small>รับ '+money(e.cash_received)+' ทอน '+money((Math.round(Number(e.cash_received)*100)-cents)/100)+'</small>':'';
+return '<tr><td>'+esc(time(e.created_at))+'</td><td>'+esc(e.machine)+'</td><td>'+money(e.game_amount)+'</td><td>'+money(e.drink_amount)+'</td><td class="tf">'+(e.pay_method==='transfer'?money(total):'–')+'</td><td class="cash">'+(e.pay_method==='cash'?money(total):'–')+change+'</td></tr>';
+}).join('');
+$('count').textContent=data.entries.length;$('cash').textContent=money(cash/100);$('transfer').textContent=money(transfer/100);
+$('book').innerHTML=rows?'<table><thead><tr><th>เวลา</th><th>เครื่อง</th><th>ค่าเกม</th><th>ค่าน้ำ</th><th>โอน</th><th>สด</th></tr></thead><tbody>'+rows+'</tbody></table>':'<p class="hint">ยังไม่มีรายการ</p>';
+$('status').textContent='อัปเดตล่าสุด '+time(new Date());
+}
+async function refresh(){if(loading)return;loading=true;$('refreshBtn').disabled=true;
+try{const {data,error}=await db.rpc('current_shift_public');if(error)throw error;render(data);$('status').classList.remove('err')}
+catch{$('shiftPanel').hidden=true;$('entryPanel').hidden=true;$('book').textContent='';$('status').textContent='โหลดข้อมูลไม่ได้ กรุณากดอัปเดตเพื่อลองใหม่';$('status').classList.add('err')}
+finally{loading=false;$('refreshBtn').disabled=false}}
+$('refreshBtn').addEventListener('click',refresh);setInterval(()=>{if(!document.hidden)refresh()},15000);window.addEventListener('focus',refresh);refresh();
+</script></body></html>
