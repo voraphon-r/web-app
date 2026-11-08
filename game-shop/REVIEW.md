@@ -79,3 +79,9 @@ Edge + Playwright ผ่าน: แสดงตารางตัวอย่า
 ทดสอบ 7/7 ผ่าน และ SQL บน voraphon-apps ตรวจสมาชิก เปิดกะ บันทึกเครื่อง20 และปิดกะผ่านใน transaction แล้ว rollback ไม่เหลือยอดทดลอง. ใช้อีเมลและรหัสผ่านเดิมของ voraphon-apps
 
 การลบโปรเจกต์แยกและการเปิด Todo ที่ pause ให้ตรวจสถานะจริงจาก Supabase; บันทึกการแยกโปรเจกต์ก่อนหน้านี้เป็นประวัติ ไม่ใช่การเชื่อมต่อปัจจุบัน
+
+## ยืนยันยกเลิกโปรเจกต์แยกสำเร็จ
+
+ผู้ใช้ยืนยันลบถาวร ณ ขั้นตอนจริงแล้ว และลบ ncbjaeitjcpoayvkadwn สำเร็จ ตรวจรายชื่อ Supabase เหลือ voraphon-apps และ voraphon.r@gmail.com's Project ทั้งคู่ ACTIVE_HEALTHY. Todo กลับมาเปิดแล้วโดยไม่แก้ข้อมูล
+
+Game-Shop ปัจจุบันใช้ qfxqjpqpytkaymlyjuuz/schema game_shop ตาม commit 2f180ce. README ปรับให้เป็นสถานะปัจจุบันและลบขั้นตอนที่ชวนให้เชื่อมไปโปรเจกต์ที่ถูกลบแล้ว เหลือตั้ง Netlify เฉพาะ Game-Shop และทดสอบเจ้าของ login บน URL จริง
