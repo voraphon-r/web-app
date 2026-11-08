@@ -19,13 +19,13 @@ test('SQL setup, RLS, money constraints, immutable closed shifts and close total
  await reject(`insert into game_shop.shifts(staff_name) values ('ซ้ำ')`);
  await reject(`insert into game_shop.shifts(id,staff_name) values (gen_random_uuid(),'x')`);
  const insert=(machine,game,drink,pay,received='null',eid='gen_random_uuid()')=>`insert into game_shop.shift_entries(id,shift_id,machine,game_amount,drink_amount,pay_method,cash_received) values (${eid},'${id}',${machine},${game},${drink},'${pay}',${received})`;
- for(const sql of [insert(13,30,0,'cash'),insert(1,"'NaN'",0,'cash'),insert(0,30,0,'cash'),insert(1,-1,0,'cash'),insert(1,0,0,'cash'),insert(1,50,0,'cash',20),insert(1,50,0,'transfer',100)]) await reject(sql);
+ for(const sql of [insert(21,30,0,'cash'),insert(1,"'NaN'",0,'cash'),insert(0,30,0,'cash'),insert(1,-1,0,'cash'),insert(1,0,0,'cash'),insert(1,50,0,'cash',20),insert(1,50,0,'transfer',100)]) await reject(sql);
  await db.exec(insert(3,100,14,'transfer'));
  await db.exec(insert(9,30,15,'cash'));
  await db.exec(insert(6,30,0,'cash'));
  await db.exec(insert(10,25,0,'cash'));
  const eid="'00000000-0000-4000-8000-000000000002'";
- await db.exec(insert(10,50,0,'cash',100,eid)); await reject(insert(10,50,0,'cash',100,eid));
+ await db.exec(insert(20,50,0,'cash',100,eid)); await reject(insert(10,50,0,'cash',100,eid));
  assert.equal((await db.query('select count(*)::int n from game_shop.shift_entries')).rows[0].n,5);
  await reject(`select game_shop.close_shift('${id}',5,149,114)`);
  await reject(`update game_shop.shift_entries set shift_id=gen_random_uuid() where id=${eid}`);

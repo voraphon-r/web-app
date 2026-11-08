@@ -31,7 +31,7 @@ create table if not exists game_shop.shift_entries (
   id            uuid primary key default gen_random_uuid(),
   shift_id      uuid not null references game_shop.shifts(id) on delete cascade,
   created_at    timestamptz not null default now(),
-  machine       integer not null check (machine between 1 and 12),
+  machine       integer not null check (machine between 1 and 20),
   game_amount   numeric(10,2) not null default 0 check (game_amount >= 0),
   drink_amount  numeric(10,2) not null default 0 check (drink_amount >= 0),
   pay_method    text not null check (pay_method in ('cash', 'transfer')),
@@ -102,7 +102,7 @@ end $$;
 -- Upgrade the original setup without discarding any entries. Invalid legacy rows
 -- deliberately stop the transaction so the owner can review them first.
 alter table game_shop.shift_entries drop constraint if exists shift_entries_machine_check;
-alter table game_shop.shift_entries add constraint shift_entries_machine_check check (machine between 1 and 12);
+alter table game_shop.shift_entries add constraint shift_entries_machine_check check (machine between 1 and 20);
 alter table game_shop.shift_entries drop constraint if exists valid_cash_received;
 alter table game_shop.shift_entries add constraint valid_cash_received check (
   (pay_method = 'transfer' and cash_received is null) or
