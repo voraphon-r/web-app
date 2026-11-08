@@ -93,3 +93,9 @@ Game-Shop ปัจจุบันใช้ qfxqjpqpytkaymlyjuuz/schema game_sho
 ## แก้ช่องทางกู้รหัสผ่าน
 
 เพิ่ม recovery.html และลิงก์จากหน้า Login รองรับ resetPasswordForEmail ด้วย fixed production redirect และ updateUser หลัง PASSWORD_RECOVERY verified session. ทดสอบรวม 10/10 ผ่าน ครอบคลุมส่งซ้ำ URL ปลายทาง รหัสไม่ตรง ลิงก์หมดอายุ และไม่รับ query flag เป็นสิทธิ์ recovery. ไม่มีการบันทึกรหัสผ่านผู้ใช้ในโค้ดหรือไฟล์ และผู้ใช้ต้องกรอกรหัสใหม่เอง
+
+## หน้าดูกะปัจจุบันแบบสาธารณะตามคำขอเจ้าของ
+
+เพิ่ม view.html และปุ่มหน้า Login. เปิดเฉพาะ projection ของกะที่ยังเปิดอยู่ผ่าน no-argument read-only SECURITY DEFINER current_shift_public(). ไม่ให้ anon อ่านตารางโดยตรง เขียนข้อมูล ปิดกะ หรือเลือกกะเก่า. ไม่เปลี่ยนสิทธิ์ Todo/Kungten
+
+ทดสอบรวม10/10ผ่าน (ขยาย SQL test ครอบคลุม public projection/ฟิลด์ที่ยอมให้เห็น/ห้ามอ่านข้อมูลบัญชี/เขียน/ปิดกะ/กะปิดคืนnull). Browser test ผ่านยอด/เงินทอน/เครื่อง20/mobile360px/no edit controls/empty/error state และใช้ anon client เสมอ. เพิ่ม migration ใน voraphon-apps สำเร็จ และตรวจ role anon จริงอ่าน projection ได้โดยไม่มี raw table หรือ close_shift access
