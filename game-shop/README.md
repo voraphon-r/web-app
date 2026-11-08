@@ -64,3 +64,11 @@ Netlify previews ที่ผูกกับ PR เดิมเป็นขอ�
 SQL บน voraphon-apps ทดสอบเปิดกะ/เครื่อง20/บันทึก/ปิดกะผ่านใน transaction แล้ว rollback ไม่เหลือยอดทดลอง. ยังต้องตรวจ login ของเจ้าของและ Realtime สองหน้าต่างบน URL Game-Shop จริง
 
 ตรวจหน้าจอเพิ่มเติมด้วย Playwright 1.62.1 + Microsoft Edge: `node tests/browser.cjs` (หรือตั้ง PLAYWRIGHT_MODULE เป็นตำแหน่งโมดูล) ใช้ข้อมูลจำลอง ไม่ติดต่อฐานจริง ผลภาพอยู่ test-output/
+
+## รีเซ็ตรหัสผ่าน
+
+เปิด /recovery.html หรือกด “ลืมรหัสผ่าน / ตั้งรหัสผ่านใหม่” ที่หน้า Login. ผู้ใช้กรอกอีเมล รับลิงก์ล่าสุดจากอีเมล และตั้งรหัสผ่านใหม่ด้วยตนเอง
+
+Supabase Authentication > URL Configuration ต้องเพิ่ม exact redirect https://game-shop-voraphon.netlify.app/recovery.html โดยไม่เปลี่ยน Site URL หรือ redirect เดิมของแอปอื่น. ไม่ใช้ wildcard. หน้าตั้งรหัสใหม่แสดงหลัง PASSWORD_RECOVERY พร้อม session ที่ตรวจแล้วเท่านั้น ตรวจยืนยันรหัสทั้งสองช่อง ป้องกันส่งซ้อน และล้างช่องรหัสหลังสำเร็จ
+
+การส่งเมลขึ้นกับ SMTP และ rate limit ของ Supabase; หากลิงก์หมดอายุหรือส่งถี่ ให้รอและขอลิงก์ใหม่ ไม่ส่งรหัสผ่านหรือลิงก์ recovery ที่มี token ในแชต

@@ -89,3 +89,7 @@ Game-Shop ปัจจุบันใช้ qfxqjpqpytkaymlyjuuz/schema game_sho
 ## เปิดเว็บ Netlify จริงแล้ว
 
 เผยแพร่ https://game-shop-voraphon.netlify.app/ ผ่าน Netlify project 5e70976f-2d58-4e98-92e3-5e9517cfaa69 จาก branch PR เดิม publish game-shop/public โดยไม่ merge. ผู้ใช้ยืนยันเปลี่ยน Production visibility เป็น Public และ Deploy Preview visibility เป็น Private แล้ว บันทึกสำเร็จ ตรวจเปิดหน้า Login จริงผ่าน Chrome โดยไม่ผ่าน Netlify team login. ยังไม่ได้ใช้รหัสผ่านเจ้าของเข้าสู่ระบบจริงหลังเผยแพร่ ต้องให้เจ้าของทำเองและตรวจ Realtime สองเครื่องต่อ
+
+## แก้ช่องทางกู้รหัสผ่าน
+
+เพิ่ม recovery.html และลิงก์จากหน้า Login รองรับ resetPasswordForEmail ด้วย fixed production redirect และ updateUser หลัง PASSWORD_RECOVERY verified session. ทดสอบรวม 10/10 ผ่าน ครอบคลุมส่งซ้ำ URL ปลายทาง รหัสไม่ตรง ลิงก์หมดอายุ และไม่รับ query flag เป็นสิทธิ์ recovery. ไม่มีการบันทึกรหัสผ่านผู้ใช้ในโค้ดหรือไฟล์ และผู้ใช้ต้องกรอกรหัสใหม่เอง
