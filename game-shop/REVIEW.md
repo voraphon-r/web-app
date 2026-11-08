@@ -85,3 +85,7 @@ Edge + Playwright ผ่าน: แสดงตารางตัวอย่า
 ผู้ใช้ยืนยันลบถาวร ณ ขั้นตอนจริงแล้ว และลบ ncbjaeitjcpoayvkadwn สำเร็จ ตรวจรายชื่อ Supabase เหลือ voraphon-apps และ voraphon.r@gmail.com's Project ทั้งคู่ ACTIVE_HEALTHY. Todo กลับมาเปิดแล้วโดยไม่แก้ข้อมูล
 
 Game-Shop ปัจจุบันใช้ qfxqjpqpytkaymlyjuuz/schema game_shop ตาม commit 2f180ce. README ปรับให้เป็นสถานะปัจจุบันและลบขั้นตอนที่ชวนให้เชื่อมไปโปรเจกต์ที่ถูกลบแล้ว เหลือตั้ง Netlify เฉพาะ Game-Shop และทดสอบเจ้าของ login บน URL จริง
+
+## เปิดเว็บ Netlify จริงแล้ว
+
+เผยแพร่ https://game-shop-voraphon.netlify.app/ ผ่าน Netlify project 5e70976f-2d58-4e98-92e3-5e9517cfaa69 จาก branch PR เดิม publish game-shop/public โดยไม่ merge. ผู้ใช้ยืนยันเปลี่ยน Production visibility เป็น Public และ Deploy Preview visibility เป็น Private แล้ว บันทึกสำเร็จ ตรวจเปิดหน้า Login จริงผ่าน Chrome โดยไม่ผ่าน Netlify team login. ยังไม่ได้ใช้รหัสผ่านเจ้าของเข้าสู่ระบบจริงหลังเผยแพร่ ต้องให้เจ้าของทำเองและตรวจ Realtime สองเครื่องต่อ

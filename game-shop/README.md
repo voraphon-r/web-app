@@ -1,5 +1,10 @@
 # Game-Shop — บันทึกประจำกะร้านเกม
 
+เว็บใช้งานจริง: https://game-shop-voraphon.netlify.app/ (เผยแพร่ 8 พฤศจิกายน 2569)
+Production เปิดถึงหน้า Login ได้โดยไม่ต้องมีบัญชี Netlify; Deploy Previews เป็น Private. ข้อมูลกะยังต้องล็อกอิน Supabase และเป็นสมาชิก Game-Shop
+
+Netlify project: game-shop-voraphon, ID 5e70976f-2d58-4e98-92e3-5e9517cfaa69. เชื่อม branch claude/project-thread-m1floy ของ PR #6 ซึ่งยังไม่ merge
+
 เว็บหน้าเดียวสำหรับเปิดกะ บันทึกลูกค้า และปิดกะ รองรับเครื่อง 1–20 ค่าเกม ค่าน้ำ/ขนม เงินสด/โอน และคิดเงินทอน
 
 ## การเชื่อมต่อปัจจุบัน
@@ -11,9 +16,9 @@
 - บัญชีร้านและสมาชิกตั้งไว้บน voraphon-apps แล้ว ใช้อีเมลและรหัสผ่านเดิมของโปรเจกต์นี้
 - Game-Shop ยังไม่มีฟังก์ชันอัปโหลด และไม่มี bucket/ไฟล์ที่ต้องย้าย
 
-## ตั้งเว็บ Netlify จาก PR เดิม
+## การตั้งเว็บ Netlify ที่ใช้อยู่
 
-สร้างโปรเจกต์ Netlify สำหรับ Game-Shop โดยเฉพาะ ไม่แก้โปรเจกต์ของ Todo หรือ Kungten
+สร้างโปรเจกต์ Netlify สำหรับ Game-Shop แล้ว ไม่แก้โปรเจกต์ของ Todo หรือ Kungten
 
 | ช่อง | ค่า |
 |---|---|
@@ -25,7 +30,7 @@
 
 หน้าเว็บเป็น HTML แบบ static และมี publishable key สำหรับ browser อยู่แล้ว ไม่ต้องใส่ service-role key ใน Netlify หรือหน้าเว็บ
 
-Netlify previews ที่ผูกกับ PR เดิมเป็นของ kungten-order และ voraphon-tierlist จึงใช้ยืนยันว่า Game-Shop เปิดให้ใช้งานแล้วไม่ได้ เมื่อมี URL ของ Game-Shop ให้ทดสอบ login/เปิดกะ/เครื่อง20/สด/โอน/เงินทอน/ปิดกะ/ย้อนหลัง/Realtime สองหน้าต่างจริง
+Netlify previews ที่ผูกกับ PR เดิมเป็นของ kungten-order และ voraphon-tierlist จึงใช้ยืนยันว่า Game-Shop เปิดให้ใช้งานแล้วไม่ได้ ตรวจเว็บ Game-Shop เปิดถึงหน้า Login แล้ว; ขั้นถัดไปให้เจ้าของทดสอบ login/เปิดกะ/เครื่อง20/สด/โอน/เงินทอน/ปิดกะ/ย้อนหลัง/Realtime สองหน้าต่างจริง
 
 ## ตั้ง Supabase กรณีเริ่มต้นใหม่
 
